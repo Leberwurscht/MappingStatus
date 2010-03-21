@@ -1,0 +1,297 @@
+<?php
+# OpenStreetMap MappingStatus - MediaWiki extension
+#
+# This defines what happens when <mappingstatus> tag is placed in the wikitext
+#
+# We show a map based on the lat/lon/zoom data passed in. This extension brings in
+# the OpenLayers javascript, to show a slippy map.
+#
+# Usage example:
+# <mappingstatus lat="51.485" lon="-0.15" z="11" w="300" h="200" layer="osmarender" marker="0" />
+#
+# Tile images are not cached local to the wiki.
+# To acheive this (remove the OSM dependency) you might set up a squid proxy,
+# and modify the requests URLs here accordingly.
+#
+# This file should be placed in the mediawiki 'extensions' directory
+# ...and then it needs to be 'included' within LocalSettings.php
+#
+# #################################################################################
+#
+# Copyright 2008 Harry Wood, Jens Frank, Grant Slater, Raymond Spekking and others
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# @addtogroup Extensions
+#
+
+class MappingStatus {
+
+	# The callback function for converting the input text to HTML output
+	static function parse( $input, $argv ) {
+		global $wgScriptPath, $wgMappingStatusMapOfServiceUrl, $wgMappingStatusVersion;
+
+		wfLoadExtensionMessages( 'MappingStatus' );
+
+		//Receive args of the form <mappingstatus aaa=bbb ccc=ddd />
+		if ( isset( $argv['lat'] ) ) {
+			$lat = $argv['lat'];
+		} else {
+			$lat = '';
+		}
+		if ( isset( $argv['lon'] ) ) {
+			$lon = $argv['lon'];
+		} else {
+			$lon = '';
+		}
+		if ( isset( $argv['z'] ) ) {
+			$zoom = $argv['z'];
+		} else {
+			$zoom = '';
+		}
+		if ( isset( $argv['w'] ) ) {
+			$width = $argv['w'];
+		} else {
+			$width = '';
+		}
+		if ( isset( $argv['h'] ) ) {
+			$height = $argv['h'];
+		} else {
+			$height = '';
+		}
+		if ( isset( $argv['layer'] ) ) {
+			$layer = $argv['layer'];
+		} else {
+			$layer = '';
+		}
+		if ( isset( $argv['marker'] ) ) {
+			$marker = $argv['marker'];
+		} else {
+			$marker = '';
+		}
+
+		$error = '';
+
+		// default values (meaning these parameters can be missed out)
+		if ( $width == '' ) $width = '450';
+		if ( $height == '' ) $height = '320';
+		if ( $layer == '' ) $layer = 'mapnik';
+
+		if ( $zoom == '' && isset( $argv['zoom'] ) ) {
+			$zoom = $argv['zoom']; // see if they used 'zoom' rather than 'z' (and allow it)
+		}
+
+		$marker = ( $marker != '' && $marker != '0' );
+
+		// trim off the 'px' on the end of pixel measurement numbers (ignore if present)
+		if ( substr( $width, -2 ) == 'px' )
+			$width = (int) substr( $width, 0, -2 );
+
+		if ( substr( $height, - 2 ) == 'px' )
+			$height = (int) substr( $height, 0, -2 );
+
+		$input = trim($input); 	
+		$showkml = false; //currently disabled
+		if ($input!='') {
+			if (strpos($input,'|')!==false) {
+				$error = 'Old style tag syntax no longer supported';
+			} else {	
+			//	$error = 'mappingstatus tag contents. Were you trying to input KML? KML support ' .
+			//	         'is disabled pending discussions about wiki syntax<br>';
+			$showkml=true;
+			}
+		}
+		
+		
+		if ($marker) $error = 'marker support is disactivated on the OSM wiki pending discussions about wiki syntax';
+	
+
+
+		if ( $error == '' ) {
+			
+			// Check required parameters values are provided
+			if ( $lat == ''  ) $error .= wfMsg( 'mappingstatus_latmissing' ) . '<br>';
+			if ( $lon == ''  ) $error .= wfMsg( 'mappingstatus_lonmissing' ) . '<br>';
+			if ( $zoom == '' ) $error .= wfMsg( 'mappingstatus_zoommissing' ) . '<br>';
+
+			
+			// no errors so far. Now check the values
+			if ( !is_numeric( $width ) ) {
+				$error = wfMsg( 'mappingstatus_widthnan', $width ) . '<br>';
+			} else if ( !is_numeric( $height ) ) {
+				$error = wfMsg( 'mappingstatus_heightnan', $height ) . '<br>';
+			} else if ( !is_numeric( $zoom ) ) {
+				$error = wfMsg( 'mappingstatus_zoomnan', $zoom ) . '<br>';
+			} else if ( !is_numeric( $lat ) ) {
+				$error = wfMsg( 'mappingstatus_latnan', $lat ) . '<br>';
+			} else if ( !is_numeric( $lon ) ) {
+				$error = wfMsg( 'mappingstatus_lonnan', $lon ) . '<br>';
+			} else if ( $width > 1000 ) {
+				$error = wfMsg( 'mappingstatus_widthbig' ) . '<br>';
+			} else if ( $width < 100 ) {
+				$error = wfMsg( 'mappingstatus_widthsmall' ) . '<br>';
+			} else if ( $height > 1000 ) {
+				$error = wfMsg( 'mappingstatus_heightbig' ) . '<br>';
+			} else if ( $height < 100 ) {
+				$error = wfMsg( 'mappingstatus_heightsmall' ) . '<br>';
+			} else if ( $lat > 90 ) {
+				$error = wfMsg( 'mappingstatus_latbig' ) . '<br>';
+			} else if ( $lat < -90 ) {
+				$error = wfMsg( 'mappingstatus_latsmall' ) . '<br>';
+			} else if ( $lon > 180 ) {
+				$error = wfMsg( 'mappingstatus_lonbig' ) . '<br>';
+			} else if ( $lon < -180 ) {
+				$error = wfMsg( 'mappingstatus_lonsmall' ) . '<br>';
+			} else if ( $zoom < 0 ) {
+				$error = wfMsg( 'mappingstatus_zoomsmall' ) . '<br>';
+			} else if ( $zoom == 18 ) {
+				$error = wfMsg( 'mappingstatus_zoom18' ) . '<br>';
+			} else if ( $zoom > 17 ) {
+				$error = wfMsg( 'mappingstatus_zoombig' ) . '<br>';
+			}
+		}
+
+		// Find the tile server URL to use.  Note that we could allow the user to override that with
+		// *any* tile server URL for more flexibility, but that might be a security concern.
+
+		$layer = strtolower( $layer );
+		$layerObjectDef = '';
+		if ( $layer == 'osmarender' ) {
+			$layerObjectDef = 'OpenLayers.Layer.OSM.Osmarender("Osmarender"); ';
+		} elseif ( $layer == 'mapnik' ) {
+			$layerObjectDef = 'OpenLayers.Layer.OSM.Mapnik("Mapnik"); ';
+		} elseif ( $layer == 'maplint' ) {
+			$layerObjectDef = 'OpenLayers.Layer.OSM.Maplint("Maplint"); ';
+		} elseif ( $layer == 'cycle' ) {
+			$layerObjectDef = 'OpenLayers.Layer.OSM.CycleMap("OpenCycleMap"); ';
+		} else {
+			$error = wfMsg( 'mappingstatus_invalidlayer',  htmlspecialchars( $layer ) );
+		}
+
+		if ( $error != "" ) {
+			// Something was wrong. Spew the error message and input text.
+			$output  = '';
+			$output .= "<span class=\"error\">" . wfMsg( 'mappingstatus_maperror' ) . ' ' . $error . "</span><br />";
+			$output .= htmlspecialchars( $input );
+		} else {
+			// HTML output for the slippy map.
+			// Note that this must all be output on one line (no linefeeds)
+			// otherwise MediaWiki adds <BR> tags, which is bad in the middle of a block of javascript.
+			// There are other ways of fixing this, but not for MediaWiki v4
+			// (See http://www.mediawiki.org/wiki/Manual:Tag_extensions#How_can_I_avoid_modification_of_my_extension.27s_HTML_output.3F)
+
+			$output  = '<!-- slippy map -->';
+
+			// This inline stylesheet defines how the two extra buttons look, and where they are positioned.
+			$output .= "<style> .buttonsPanel div { float:left; display:block; position:relative; left:50px; margin-left:3px; margin-top:7px; width:36px;  height:19px; }</style>\n";
+			$output .= "<style> .buttonsPanel .getWikiCodeButtonItemInactive { width:36px; height:19px; background-image:url('" . $wgScriptPath . "/extensions/MappingStatus/wikicode-button.png'); }</style>\n";
+			$output .= "<style> .buttonsPanel .resetButtonItemInactive       { width:36px; height:19px; background-image:url('" . $wgScriptPath . "/extensions/MappingStatus/reset-button.png'); }</style>\n";
+
+			$output .= "<!-- bring in the OpenLayers javascript library -->\n";
+			$output .= "<script src=\"http://openlayers.org/api/OpenLayers.js\"></script> \n";
+
+			$output .= "<!-- bring in the OpenStreetMap OpenLayers layers. \n";
+			$output .= "     Using this hosted file will make sure we are kept up \n";
+			$output .= "     to date with any necessary changes --> \n";
+			$output .= "<script src=\"http://openstreetmap.org/openlayers/OpenStreetMap.js\"></script> \n";
+
+			$output .= '<script type="text/javascript">\n';
+
+			$output .= "var lon= ${lon}; var lat= ${lat}; var zoom= ${zoom}; var lonLat;\n";
+
+			$output .= 'var map; \n';
+
+			$output .= 'addOnloadHook( mappingstatus_init ); \n';
+
+			$output .= 'function mappingstatus_resetPosition() {\n';
+			$output .= '	map.setCenter(lonLat, zoom);\n';
+			$output .= '}\n';
+
+			$output .= 'function mappingstatus_getWikicode() {\n';
+			$output .= '	LL = map.getCenter().transform(map.getProjectionObject(), new OpenLayers.Projection("EPSG:4326"));\n';
+			$output .= '    Z = map.getZoom(); \n';
+			$output .= '    size = map.getSize();\n';
+
+			$output .= '    prompt( "' . wfMsg( 'mappingstatus_code' ) . '", "<mappingstatus h="+size.h+" w="+size.w+" z="+Z+" lat="+LL.lat+" lon="+LL.lon+" layer=mapnik />" ); \n';
+			$output .= '}\n';
+
+			$output .= 'function mappingstatus_init() { \n';
+			$output .= '	map = new OpenLayers.Map("map", { \n';
+			$output .= '		controls:[ \n';
+			$output .= '			new OpenLayers.Control.Navigation(), \n';
+
+			if ( $height > 320 ) {
+				// Add the zoom bar control, except if the map is only little
+				$output .= '		new OpenLayers.Control.PanZoomBar(),\n';
+			} else if ( $height > 140 ) {
+				$output .= '            new OpenLayers.Control.PanZoom(),\n';
+			}
+
+			$output .= '			new OpenLayers.Control.Attribution()], \n';
+			$output .= '		maxExtent: new OpenLayers.Bounds(-20037508.34,-20037508.34,20037508.34,20037508.34), \”';
+			$output .= '			maxResolution:156543.0399, units:\'meters\', projection: "EPSG:900913"} ); \n';
+
+			$output .= '	layer = new ' . $layerObjectDef."\n";
+
+			$output .= '	map.addLayer(layer); \n';
+
+			$output .= '	epsg4326 = new OpenLayers.Projection("EPSG:4326"); \n';
+			$output .= '	lonLat = new OpenLayers.LonLat(lon, lat).transform( epsg4326, map.getProjectionObject()); \n';
+
+			/*
+			if ( $marker ) {
+				$output .= 'var markers = new OpenLayers.Layer.Markers( "Markers" ); ' .
+				'   map.addLayer(markers); ' .
+				'   var size = new OpenLayers.Size(20,34); ' .
+				'   var offset = new OpenLayers.Pixel(-(size.w/2), -size.h); ' .
+				"   var icon = new OpenLayers.Icon('http://boston.openguides.org/markers/YELLOW.png',size,offset);" .
+				'   markers.addMarker(new OpenLayers.Marker( lonLat,icon)); ';
+			}
+			*/
+
+			if ( $showkml ) {
+				$input = str_replace( array( '%',   "\n" , "'"  , '"'  , '<'  , '>'  , ' '   ),
+				array( '%25', '%0A', '%27', '%22', '%3C', '%3E', '%20' ), $input );
+				$output .= 'var vector = new OpenLayers.Layer.Vector("Vector Layer"); \n' .
+				'   map.addLayer(vector); \n' .
+				'   kml = new OpenLayers.Format.KML( { "internalProjection": map.baseLayer.projection, \n' .
+				'                                      "externalProjection": epsg4326 } \n) ' .
+//				'                                      "extractStyles": true, \n' .
+//				'                                      "extractAttributes": true } ); \n' .
+				"   features = kml.read(unescape('$input')); \n" .
+				'   vector.addFeatures( features ); \n';
+			}
+
+			$output .= '	map.setCenter (lonLat, zoom); \n';
+			$output .= '	var getWikiCodeButton = new OpenLayers.Control.Button({title: "' . wfMsg( 'mappingstatus_button_code' ) . '", displayClass: "getWikiCodeButton", trigger: mappingstatus_getWikicode}); \n';
+			$output .= '	var resetButton = new OpenLayers.Control.Button({title: "' . wfMsg( 'mappingstatus_resetview' ) . '", displayClass: "resetButton", trigger: mappingstatus_resetPosition}); \n';
+			$output .= '	var panel = new OpenLayers.Control.Panel( { displayClass: "buttonsPanel"}); \n';
+			$output .= '	panel.addControls([getWikiCodeButton, resetButton]); \n';
+			$output .= '	map.addControl(panel); \n';
+			$output .= '} \n';
+
+
+			$output .= "</script> \n";
+
+			$output .= "<div style=\"width: {$width}px; height:{$height}px; border-style:solid; border-width:1px; border-color:lightgrey;\" id=\"map\">";
+			$output .= "<noscript><a href=\"http://www.openstreetmap.org/?lat=$lat&lon=$lon&zoom=$zoom\" title=\"See this map on OpenStreetMap.org\" style=\"text-decoration:none\">";
+			$output .= "<img src=\"" . $wgMappingStatusMapOfServiceUrl . "lat=${lat}&long=${lon}&z=${zoom}&w=${width}&h=${height}&format=jpeg\" width=\"${width}\" height=\"${height}\" border=\"0\" alt=\"Slippy Map\"><br />";
+			$output .= '</a></noscript>';
+			$output .= '</div>';
+
+		}
+		return $output;
+	}
+}
