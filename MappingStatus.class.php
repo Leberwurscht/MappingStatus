@@ -41,7 +41,7 @@ class MappingStatus {
 
 	# The callback function for converting the input text to HTML output
 	static function parse( $input, $argv ) {
-		global $wgScriptPath, $wgMappingStatusMapOfServiceUrl, $wgMappingStatusVersion;
+		global $wgScriptPath, $wgMappingStatusMapOfServiceUrl, $wgMappingStatusVersion, $wgTitle;
 
 		wfLoadExtensionMessages( 'MappingStatus' );
 
@@ -292,6 +292,11 @@ class MappingStatus {
 			$output .= '</div>';
 
 		}
+
+		$sp = Title::newFromText( "Special:MappingStatusEdit" );
+		$editlink = ( $sp->escapeLocalURL() )."/".( $wgTitle->getSubpageUrlForm() );
+		$output .= '<p><a href="'.$editlink.'">EDIT</a></p>';
+
 		return $output;
 	}
 }
