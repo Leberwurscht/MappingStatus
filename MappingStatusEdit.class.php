@@ -59,6 +59,7 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
 		$form .= "<script type='text/javascript'>\n";
+		$form .= "var mappingstatusmap;\n";
 		$form .= "\taddOnloadHook(function(){ mappingstatusmap=new mappingstatus('mappingstatusmap','mappingstatusdata',true); });\n";
 		$form .= "</script>\n";
 
