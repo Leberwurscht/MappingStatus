@@ -7,7 +7,7 @@ class MappingStatusEdit extends SpecialPage {
 	}
  
 	function execute( $par ) {
-		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath;
+		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath, $wgUser;
  
 		$this->setHeaders();
 
@@ -26,15 +26,30 @@ class MappingStatusEdit extends SpecialPage {
 
 		$article  = new Article($title);
 
+
 		if ($action=="save")
 		{
-			# Do stuff
-			$editor= new EditPage($article);
+			$editor = new EditPage($article);
 			$editor->summary = "updated mappingstatus";
 			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
 
 			$detail=false;
 			$r=$editor->attemptSave(&$detail);
+		}
+		else
+		{
+			$permErrors = $article->getTitle()->getUserPermissionsErrors( 'edit', $wgUser );
+
+			# Can this title be created?
+			if ( !$article->getTitle()->exists() ) {
+				$permErrors = array_merge( $permErrors,
+					wfArrayDiff2( $article->getTitle()->getUserPermissionsErrors( 'create', $wgUser ), $permErrors ) );
+			}
+
+			if ($permErrors)
+			{
+				$wgOut->addHTML("<strong style='color:#f00;'>You don't have the permission to edit this map.</strong>");
+			}
 		}
 
 		$status=$this->getMappingStatus($article,$id);
@@ -44,12 +59,14 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
 		$form .= "<script type='text/javascript'>\n";
-		$form .= "\taddOnloadHook(function(){ mappingstatus('mappingstatusmap','mappingstatusdata',true); });\n";
+		$form .= "\taddOnloadHook(function(){ mappingstatusmap=new mappingstatus('mappingstatusmap','mappingstatusdata',true); });\n";
 		$form .= "</script>\n";
 
 		$form .= "<form action='$url' method='post'>\n";
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
+		$form .= "<input type='button' value='Update' onclick='mappingstatusmap.update_data();'/>\n";
+//		$form .= "<input type='button' value='Update' onclick='updatetest(\"mappingstatusdata\");'/>\n";
 		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
 		$wgOut->addHTML($form);
@@ -60,7 +77,7 @@ class MappingStatusEdit extends SpecialPage {
 		$content = $article->getContent();
 		$matches=array();
 		preg_match("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is",$content,&$matches);
-		return $matches[1];
+		return htmlentities($matches[1]);
 	}
 
 	function setMappingStatus($article,$status,$id)
@@ -71,7 +88,7 @@ class MappingStatusEdit extends SpecialPage {
 
 		if ($count==0)
 		{
-			$replaced = "<mappingstatus id=\"$id\"></mappingstatus>\n\n".$status;
+			$replaced = "<mappingstatus id=\"$id\">$status</mappingstatus>\n\n".$content;
 		}
 
 		return $replaced;

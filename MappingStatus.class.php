@@ -41,7 +41,9 @@ class MappingStatus {
 	# The callback function for converting the input text to HTML output
 	static function parse( $input, $argv )
 	{
-		global $wgScriptPath, $wgHooks, $wgOut, $wgParser;
+		global $wgScriptPath, $wgHooks, $wgOut, $wgParser, $wgUser;
+
+		$status = htmlentities($input);
 
 		if (!isset($argv["id"]))
 		{
@@ -53,16 +55,19 @@ class MappingStatus {
 		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$output .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
 		$output .= "<script type='text/javascript'>\n";
-		$output .= "\taddOnloadHook(function(){ mappingstatus('mappingstatusmap_$id','mappingstatusdata_$id',false); });\n";
+		$output .= "\taddOnloadHook(function(){ new mappingstatus('mappingstatusmap_$id','mappingstatusdata_$id',false); });\n";
 		$output .= "</script>\n";
 
 		$output .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap_$id'></div>\n";
-		$output .= "<textarea rows='10' cols='80' readonly='readonly' id='mappingstatusdata_$id'>$input</textarea>\n";
+		$output .= "<textarea rows='10' cols='80' readonly='readonly' id='mappingstatusdata_$id'>$status</textarea>\n";
 
-		$sp = Title::newFromText("Special:MappingStatusEdit");
-		$editlink = ( $sp->escapeLocalURL() )."/".( $wgParser->getTitle()->getSubpageUrlForm() )."?mappingstatusmapid=$id";
+		if (!$wgParser->getTitle()->getUserPermissionsErrors('edit', $wgUser))
+		{
+			$sp = Title::newFromText("Special:MappingStatusEdit");
+			$editlink = ( $sp->escapeLocalURL() )."/".( $wgParser->getTitle()->getSubpageUrlForm() )."?mappingstatusmapid=$id";
 
-		$output .= "<a href='$editlink'>EDIT</a>";
+			$output .= "<a href='$editlink'>EDIT</a>";
+		}
 
 		$marker = "xx-mappingstatus-marker-$id-xx";
 
