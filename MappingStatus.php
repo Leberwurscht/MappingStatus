@@ -53,7 +53,6 @@ if( defined( 'MEDIAWIKI' ) ) {
 
 	$wgAutoloadClasses['MappingStatus'] = dirname( __FILE__ ) . '/MappingStatus.class.php';
 	$wgAutoloadClasses['MappingStatusEdit'] = dirname( __FILE__ ) . '/MappingStatusEdit.class.php';
-	$wgAutoloadClasses['MappingStatusEditPage'] = dirname( __FILE__ ) . '/MappingStatusEditPage.class.php';
 	$wgSpecialPages['MappingStatusEdit'] = 'MappingStatusEdit';
 	$wgExtensionMessagesFiles['MappingStatus'] = dirname( __FILE__ ) . "/MappingStatus.i18n.php";
 
@@ -61,14 +60,13 @@ if( defined( 'MEDIAWIKI' ) ) {
 	$wgMappingStatusVersion = 1;
 
 	function wfmappingstatus() {
-		global $wgParser, $wgMapOfServiceUrl;
+		global $wgParser, $wgOut;
 		# register the extension with the WikiText parser
 		# the first parameter is the name of the new tag.
 		# In this case it defines the tag <mappingstatus> ... </mappingstatus>
 		# the second parameter is the callback function for
 		# processing the text between the tags
 		$wgParser->setHook( 'mappingstatus', array( 'MappingStatus', 'parse' ) );
-		$wgMappingStatusMapOfServiceUrl = "http://osm-tah-cache.firefishy.com/~ojw/MapOf/?";
 	}
 
 }

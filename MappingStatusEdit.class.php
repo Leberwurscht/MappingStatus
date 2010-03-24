@@ -7,14 +7,17 @@ class MappingStatusEdit extends SpecialPage {
 	}
  
 	function execute( $par ) {
-		global $wgRequest, $wgOut, $wgTitle;
+		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath;
  
 		$this->setHeaders();
+
+		$wgOut->setPagetitle("Edit mapping status");
  
-		# Get request data from, e.g.
 		$action = $wgRequest->getText("action");
 
-		$title    = Title::newFromText($par);
+		$id = $wgRequest->getInt("mappingstatusmapid");
+
+		$title = Title::newFromText($par);
 		if ($title==null)
 		{
 			$wgOut->addWikiText("No article given.");
@@ -26,49 +29,51 @@ class MappingStatusEdit extends SpecialPage {
 		if ($action=="save")
 		{
 			# Do stuff
-	//		$article->mContent = "EDITED";
 			$editor= new EditPage($article);
-	//		$editor= new MappingStatusEditPage($article);
-	//		$editor->submit();
-//			$content="";
-	//		$content=$editor->getContent();
-			$editor->summary="updated mappingstatus";
-			$editor->textbox1=$this->saveMappingStatus($article,$wgRequest->getText("textbox1"));
+			$editor->summary = "updated mappingstatus";
+			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
 
 			$detail=false;
 			$r=$editor->attemptSave(&$detail);
 		}
-		else
-		{
-			$status=$this->loadMappingStatus($article);
-//			$status=$this->saveMappingStatus($article);
-//			$url = $wgRequest->getText("title");
-			$url = $wgTitle->escapeLocalURL()."/".$par."?action=save";
-			$form = "<form action='$url' method='post'>";
-			$form .= "<textarea name='textbox1'>".$status."</textarea>";
-			$form .= "<input type='submit' value='Save'>";
-			$form .= '</form>';
-			$wgOut->addHTML($form);
-		}
 
-//		$output="Hello world! ".var_export($r,true).".";
-//		$output.="OK";
-//		$content .= $output;
-//		$wgOut->addWikiText( $content );
+		$status=$this->getMappingStatus($article,$id);
+		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&mappingstatusmapid=$id";
+
+		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
+		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
+		$form .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
+		$form .= "<script type='text/javascript'>\n";
+		$form .= "\taddOnloadHook(function(){ mappingstatus('mappingstatusmap','mappingstatusdata',true); });\n";
+		$form .= "</script>\n";
+
+		$form .= "<form action='$url' method='post'>\n";
+		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
+		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
+		$form .= "<input type='submit' value='Save'/>\n";
+		$form .= "</form>\n";
+		$wgOut->addHTML($form);
 	}
 
-	function loadMappingStatus($article)
+	function getMappingStatus($article,$id)
 	{
 		$content = $article->getContent();
 		$matches=array();
-		preg_match("/\<mappingstatus\>(.*)\<\/mappingstatus\>/is",$content,&$matches);
+		preg_match("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is",$content,&$matches);
 		return $matches[1];
 	}
 
-	function saveMappingStatus($article,$status)
+	function setMappingStatus($article,$status,$id)
 	{
 		$content = $article->getContent();
-		$replaced=preg_replace("/\<mappingstatus\>(.*)\<\/mappingstatus\>/is","<mappingstatus>".$status."</mappingstatus>",$content);
+		$count=0;
+		$replaced=preg_replace("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is","<mappingstatus id=\"$id\">$status</mappingstatus>",$content,1,&$count);
+
+		if ($count==0)
+		{
+			$replaced = "<mappingstatus id=\"$id\"></mappingstatus>\n\n".$status;
+		}
+
 		return $replaced;
 	}
 }
