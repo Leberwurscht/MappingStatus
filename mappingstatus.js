@@ -23,6 +23,8 @@ function mappingstatus_mapconfig(text)
 		else if (words[0]=="height") this.height = parseFloat(words[1]);
 		else if (words[0]=="polygon")
 		{
+			var parts = line.split(":");
+			var words = parts[0].split(" ");
 			var polygon = Array();
 
 			for (j=1;j<words.length;j++)
@@ -30,7 +32,15 @@ function mappingstatus_mapconfig(text)
 				var coordinates = words[j].split(",");
 				polygon[j-1]=Array(parseFloat(coordinates[0]),parseFloat(coordinates[1]));
 			}
-			this.polygons[this.polygons.length]=polygon;
+			var words = parts[1].split(" ");
+			var status = Object();
+
+			for (j=1;j<words.length;j++)
+			{
+				var keyvalue = words[j].split("=");
+				status[keyvalue[0]]=keyvalue[1];
+			}
+			this.polygons[this.polygons.length]={"points":polygon,"status":status};
 		}
 	}
 
@@ -45,9 +55,14 @@ function mappingstatus_mapconfig(text)
 		for (i=0;i<this.polygons.length;i++)
 		{
 			text += "polygon"
-			for (j=0;j<this.polygons[i].length;j++)
+			for (j=0;j<this.polygons[i].points.length;j++)
 			{
-				text += " "+this.polygons[i][j][0]+","+this.polygons[i][j][1];
+				text += " "+this.polygons[i].points[j][0]+","+this.polygons[i].points[j][1];
+			}
+			text += ":";
+			for (j in this.polygons[i].status)
+			{
+				text += " "+j+"="+this.polygons[i].status[j];
 			}
 			text += "\n";
 		}
@@ -83,12 +98,21 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 	this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
 	this.map.addLayer(this.vectors);
 
-	var selectedit = function(feature)
+	var unselectfeature = function(feature)
 	{
-		var generate_selection_box = function(form,symbols,id)
+		while (this.mappingstatus.properties_element.hasChildNodes())
 		{
-			var states = {"-":"unbekannt","0":"nix","1":"bissl"};
+			this.mappingstatus.properties_element.removeChild(this.mappingstatus.properties_element.firstChild);
+		}
+	}
+
+	var selectfeature = function(feature)
+	{
+		var generate_status_table = function(form,symbols,config,prefix,feature)
+		{
+			var states = {"?":"unbekannt","0":"nix","1":"bissl"};
 			var table = document.createElement("table");
+			table.setAttribute("border","1");
 			form.appendChild(table);
 
 			var tr = document.createElement("tr");
@@ -112,8 +136,28 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 				{
 					var radiobutton = document.createElement("input");
 					radiobutton.setAttribute("type","radio");
-					radiobutton.setAttribute("name","mappingstatus_"+id+"_"+s);
+					radiobutton.setAttribute("name",prefix+s);
 					radiobutton.setAttribute("value",i);
+					if (feature.mappingstatus_polygon.status[s]==i)
+					{
+						radiobutton.setAttribute("checked","checked");
+					}
+
+					// callback to update config
+					var callback = function(s,i,f)
+					{
+						var state=i;
+						var symbol=s;
+						var polygon=f.mappingstatus_polygon;
+
+						this.run = function()
+						{
+							polygon.status[symbol]=state;
+						}
+					}
+
+					var cb=new callback(s,i,feature);
+					radiobutton.onchange=cb.run;
 
 					var td=document.createElement("td");
 					td.appendChild(radiobutton);
@@ -122,60 +166,13 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 			}
 		}
 
-		var addselect = function(form, text, name)
+		while (this.mappingstatus.properties_element.hasChildNodes())
 		{
-			var desc = document.createElement("div");
-			desc.appendChild(document.createTextNode(text+": "));
-			form.appendChild(desc);
-
-			var s = document.createElement("select");
-			s.setAttribute("name",name);
-			form.appendChild(s);
-			form.appendChild(document.createElement("br"));
-
-			var o = document.createElement("option");
-			o.setAttribute("value","-");
-			o.appendChild(document.createTextNode("unbekannt"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","0");
-			o.appendChild(document.createTextNode("nix"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","1");
-			o.appendChild(document.createTextNode("bissl"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","2");
-			o.appendChild(document.createTextNode("fast alles"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","3");
-			o.appendChild(document.createTextNode("alles"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","4");
-			o.appendChild(document.createTextNode("fast alles"));
-			s.appendChild(o);
-
-			var o = document.createElement("option");
-			o.setAttribute("value","X");
-			o.appendChild(document.createTextNode("gibts nicht"));
-			s.appendChild(o);
-		}
-
-		while (this.properties_element.hasChildNodes())
-		{
-			this.properties_element.removeChild(this.properties_element.firstChild);
+			this.mappingstatus.properties_element.removeChild(this.mappingstatus.properties_element.firstChild);
 		}
 
 		var form = document.createElement("form");
-		this.properties_element.appendChild(form);
+		this.mappingstatus.properties_element.appendChild(form);
 
 		/*addselect(form,"Straßennamen","l");
 		addselect(form,"Straßen","c");
@@ -188,8 +185,8 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 		addselect(form,"Sehenswürdigkeiten","t");
 		addselect(form,"Natürliche Bereiche","n");
 		addselect(form,"Hausnummern","h");*/
-		generate_selection_box(form,{"l":"straßennamen","c":"straßen"});
-		this.properties_element.style.display = "block";
+		generate_status_table(form,{"l":"straßennamen","c":"straßen"},this.mappingstatus.config,this.mappingstatus.properties_element.name,feature);
+		this.mappingstatus.properties_element.style.display = "block";
 		
 /*		"Wikiseite: <input type='text' id='mappingstatus_wikipage'>";
 		"<br/>Beschreibung: <input type='text' id='mappingstatus_description'>"; */
@@ -199,8 +196,8 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 	{
 		this.map.addControl(new OpenLayers.Control.EditingToolbar(this.vectors));
 
-		var select = new OpenLayers.Control.SelectFeature(this.vectors, {onSelect:selectedit});
-		select.properties_element = this.properties_element;
+		var select = new OpenLayers.Control.SelectFeature(this.vectors, {onSelect:selectfeature,onUnselect:unselectfeature});
+		select.mappingstatus = this;
 		this.map.addControl(select);
 		select.activate();
 	}
@@ -218,14 +215,15 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 
 		this.vectors.eraseFeatures(this.vectors.features);
 		var features=Array();
+
 		for (i in this.config.polygons)
 		{
 			var polygon=this.config.polygons[i];
 			var geometrypoints = Array();
 
-			for (j in polygon)
+			for (j in polygon.points)
 			{
-				var lonLat = new OpenLayers.LonLat(polygon[j][0], polygon[j][1]);
+				var lonLat = new OpenLayers.LonLat(polygon.points[j][0], polygon.points[j][1]);
 				lonLat.transform( mappingstatus_epsg4326, this.map.getProjectionObject());
 				geometrypoints[j] = new OpenLayers.Geometry.Point(lonLat.lon,lonLat.lat);
 			}
@@ -235,6 +233,9 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 					Array(new OpenLayers.Geometry.LinearRing(geometrypoints))
 				)
 			);
+
+			polygon.feature=features[i];
+			polygon.feature.mappingstatus_polygon=polygon;
 		}
 		this.vectors.addFeatures(features);
 	}
@@ -259,8 +260,8 @@ function mappingstatus(map_id, data_id, properties_id, edit)
 				{
 					var lonLat = new OpenLayers.LonLat(points[j].x, points[j].y).transform(this.map.getProjectionObject(), mappingstatus_epsg4326);
 					polygon[j]=Array(lonLat.lon,lonLat.lat);
-					this.config.polygons[i]=polygon;
 				}
+				this.config.polygons[i].points=polygon;
 			}
 		}
 	}
