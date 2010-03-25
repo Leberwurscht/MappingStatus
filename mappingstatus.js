@@ -58,10 +58,12 @@ function mappingstatus_mapconfig(text)
 
 var mappingstatus_epsg4326 = new OpenLayers.Projection("EPSG:4326");
 
-function mappingstatus(map_id, data_id, edit)
+function mappingstatus(map_id, data_id, properties_id, edit)
 {
 	this.data_element = document.getElementById(data_id);
+	this.properties_element = document.getElementById(properties_id);
 	this.map_element = document.getElementById(map_id);
+	this.edit=edit;
 
 	this.map = new OpenLayers.Map(map_id, {
 		controls:[
@@ -81,16 +83,124 @@ function mappingstatus(map_id, data_id, edit)
 	this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
 	this.map.addLayer(this.vectors);
 
-	this.select = function(feature)
+	var selectedit = function(feature)
 	{
+		var generate_selection_box = function(form,symbols,id)
+		{
+			var states = {"-":"unbekannt","0":"nix","1":"bissl"};
+			var table = document.createElement("table");
+			form.appendChild(table);
+
+			var tr = document.createElement("tr");
+			table.appendChild(tr);
+			var td=document.createElement("td");
+			tr.appendChild(td);
+			for (s in symbols)
+			{
+				var td=document.createElement("td");
+				td.appendChild(document.createTextNode(s));
+				tr.appendChild(td);
+			}
+			for (i in states)
+			{
+				var tr = document.createElement("tr");
+				table.appendChild(tr);
+				var td=document.createElement("td");
+				td.appendChild(document.createTextNode(i));
+				tr.appendChild(td);
+				for (s in symbols)
+				{
+					var radiobutton = document.createElement("input");
+					radiobutton.setAttribute("type","radio");
+					radiobutton.setAttribute("name","mappingstatus_"+id+"_"+s);
+					radiobutton.setAttribute("value",i);
+
+					var td=document.createElement("td");
+					td.appendChild(radiobutton);
+					tr.appendChild(td);
+				}
+			}
+		}
+
+		var addselect = function(form, text, name)
+		{
+			var desc = document.createElement("div");
+			desc.appendChild(document.createTextNode(text+": "));
+			form.appendChild(desc);
+
+			var s = document.createElement("select");
+			s.setAttribute("name",name);
+			form.appendChild(s);
+			form.appendChild(document.createElement("br"));
+
+			var o = document.createElement("option");
+			o.setAttribute("value","-");
+			o.appendChild(document.createTextNode("unbekannt"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","0");
+			o.appendChild(document.createTextNode("nix"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","1");
+			o.appendChild(document.createTextNode("bissl"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","2");
+			o.appendChild(document.createTextNode("fast alles"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","3");
+			o.appendChild(document.createTextNode("alles"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","4");
+			o.appendChild(document.createTextNode("fast alles"));
+			s.appendChild(o);
+
+			var o = document.createElement("option");
+			o.setAttribute("value","X");
+			o.appendChild(document.createTextNode("gibts nicht"));
+			s.appendChild(o);
+		}
+
+		while (this.properties_element.hasChildNodes())
+		{
+			this.properties_element.removeChild(this.properties_element.firstChild);
+		}
+
+		var form = document.createElement("form");
+		this.properties_element.appendChild(form);
+
+		/*addselect(form,"Straßennamen","l");
+		addselect(form,"Straßen","c");
+		addselect(form,"Radwege","b");
+		addselect(form,"Fußwege","fo");
+		addselect(form,"Öffentliche Verkehrsmittel","tr");
+		addselect(form,"Öffentliche Einrichtungen","p");
+		addselect(form,"Tankstellen","fu");
+		addselect(form,"Restaurants und Hotels","r");
+		addselect(form,"Sehenswürdigkeiten","t");
+		addselect(form,"Natürliche Bereiche","n");
+		addselect(form,"Hausnummern","h");*/
+		generate_selection_box(form,{"l":"straßennamen","c":"straßen"});
+		this.properties_element.style.display = "block";
 		
+/*		"Wikiseite: <input type='text' id='mappingstatus_wikipage'>";
+		"<br/>Beschreibung: <input type='text' id='mappingstatus_description'>"; */
 	}
 
 	if (edit)
 	{
 		this.map.addControl(new OpenLayers.Control.EditingToolbar(this.vectors));
 
-		var select = new OpenLayers.Control.SelectFeature(this.vectors, {onSelect:this.select});
+		var select = new OpenLayers.Control.SelectFeature(this.vectors, {onSelect:selectedit});
+		select.properties_element = this.properties_element;
 		this.map.addControl(select);
 		select.activate();
 	}
