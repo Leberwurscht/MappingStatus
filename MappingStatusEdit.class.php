@@ -61,7 +61,7 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript'>\n";
 		$form .= "\tvar mappingstatusmap;\n";
 		$form .= "\taddOnloadHook(function(){\n";
-		$form .= "\t\tmappingstatusmap=new mappingstatus('mappingstatusmap','mappingstatusdata','mappingstatusproperties',true);\n";
+		$form .= "\t\tmappingstatusmap=new mappingstatusmap('mappingstatusmap','mappingstatusdata','mappingstatusproperties',true);\n";
 //		$form .= "\t\tform = document.getElementById('editform');\n";
 //		$form .= "\t\taddHandler(form,'submit',mappingstatusmap.update_data);\n";
 		$form .= "\t});\n";
@@ -69,21 +69,7 @@ class MappingStatusEdit extends SpecialPage {
 
 		$form .= "<form action='$url' method='post' id='editform'>\n";
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
-		$form .= "<div style='display:none;' id='mappingstatusproperties'>\n";
-/*		$form .= "Wikiseite: <input type='text' id='mappingstatus_wikipage'>";
-		$form .= "<br/>Beschreibung: <input type='text' id='mappingstatus_description'>";
-		$form .= "<br/>Straßennamen: ".$this->getstatusselect("mappingstatus_l");
-		$form .= "<br/>Straßen: ".$this->getstatusselect("mappingstatus_c");
-		$form .= "<br/>Radwege: ".$this->getstatusselect("mappingstatus_b");
-		$form .= "<br/>Fußwege: ".$this->getstatusselect("mappingstatus_fo");
-		$form .= "<br/>Öffentliche Verkehrsmittel: ".$this->getstatusselect("mappingstatus_tr");
-		$form .= "<br/>Öffentliche Einrichtungen: ".$this->getstatusselect("mappingstatus_p");
-		$form .= "<br/>Tankstellen: ".$this->getstatusselect("mappingstatus_fu");
-		$form .= "<br/>Restaurants und Hotels: ".$this->getstatusselect("mappingstatus_r");
-		$form .= "<br/>Sehenswürdigkeiten: ".$this->getstatusselect("mappingstatus_t");
-		$form .= "<br/>Natürliche Bereiche: ".$this->getstatusselect("mappingstatus_n");
-		$form .= "<br/>Hausnummern: ".$this->getstatusselect("mappingstatus_h"); */
-		$form .= "</div>\n";
+		$form .= "<div style='display:none;' id='mappingstatusproperties'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
 		$form .= "<input type='button' value='Update' onclick='mappingstatusmap.update_data();'/>\n";
 		$form .= "<input type='submit' value='Save'/>\n";
