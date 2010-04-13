@@ -460,22 +460,10 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 				this.properties_element.removeChild(this.properties_element.firstChild);
 			}
 
-			if (ev.feature.attributes.label)
-			{
-				var label = document.createElement("p");
-				label.appendChild(document.createTextNode(ev.feature.attributes.label));
-				this.properties_element.appendChild(label);
-			}
-			else if (ev.feature.attributes.article)
-			{
-				var label = document.createElement("p");
-				label.appendChild(document.createTextNode(ev.feature.attributes.article));
-				this.properties_element.appendChild(label);
-			}
-
 			// create table
 			var table = document.createElement("table");
-			table.setAttribute("border","1");
+			table.style.backgroundColor="#fff";
+			table.setAttribute("border","0");
 			this.properties_element.appendChild(table);
 			var tr = document.createElement("tr");
 			table.appendChild(tr);
@@ -485,6 +473,21 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 				state = ev.feature.attributes.states[symbol];
 				td.appendChild(this.images[symbol][state]);
 				tr.appendChild(td);
+			}
+
+			if (ev.feature.attributes.label)
+			{
+				var label = document.createElement("p");
+				label.style.backgroundColor="#fff";
+				label.appendChild(document.createTextNode(ev.feature.attributes.label));
+				this.properties_element.appendChild(label);
+			}
+			else if (ev.feature.attributes.article)
+			{
+				var label = document.createElement("p");
+				label.style.backgroundColor="#fff";
+				label.appendChild(document.createTextNode(ev.feature.attributes.article));
+				this.properties_element.appendChild(label);
 			}
 
 			// make visible
@@ -521,6 +524,11 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 			"featureselected": featureclicked,
 			scope: select
 		});
+
+		this.map.viewPortDiv.appendChild(this.properties_element);
+		this.properties_element.style.position="absolute";
+		this.properties_element.style.right="0px";
+		this.properties_element.style.zIndex=this.map.Z_INDEX_BASE['Popup']-1;
 
 		this.map.addControl(highlight);
 		this.map.addControl(select);
