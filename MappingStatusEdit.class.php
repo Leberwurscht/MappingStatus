@@ -71,7 +71,7 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div style='display:none;' id='mappingstatusproperties'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
-		$form .= "<input type='button' value='Update' onclick='mappingstatusmap.update_data();'/>\n";
+		$form .= "<input type='button' value='Update' onclick='mappingstatusmap.set_textfield_from_map();'/>\n";
 		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
 		$wgOut->addHTML($form);
