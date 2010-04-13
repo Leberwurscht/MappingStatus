@@ -1,9 +1,9 @@
-function mappingstatusmap(map_id, textfield_id, properties_id, edit)
+function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 {
 	// definitions
 	var epsg4326 = new OpenLayers.Projection("EPSG:4326");
-	var symbols = {"l":{"name":"street names"}, "c":{"name":"streets"}};
-	var states = {"?":"unknown", "0":"nothing", "1":"partial", "2":"nearly everything", "3":"done", "4":"double-checked", "X":"doesn't exist"};
+	var symbols = {"Labelled":"street names", "Car":"streets"};
+	var states = {"":"unknown", "0":"nothing", "1":"partial", "2":"nearly everything", "3":"done", "4":"double-checked", "X":"don't exist"};
 
 	// methods
 	this.set_map_from_textfield = function()
@@ -16,7 +16,7 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 		height=400;
 
 		// clear vector layer
-		this.vectors.eraseFeatures(this.vectors.features);
+		this.vectors.removeFeatures(this.vectors.features);
 
 		// parse textfield content
 		var lines=this.textfield_element.value.split("\n");
@@ -122,7 +122,7 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 				this.vectors.addFeatures([feature]);
 
 				// set default values
-				for (var j in symbols) feature.attributes.states[j]="?";
+				for (var j in symbols) feature.attributes.states[j]="";
 
 				// get states
 				var states = line.replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
@@ -203,10 +203,8 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 	};
 
 	// callbacks
-	var clear_properties = function(ev)
+	this.clear_properties = function(ev)
 	{
-		feature=ev.feature;
-
 		// clear properties_element
 		while (this.properties_element.hasChildNodes())
 		{
@@ -221,13 +219,24 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 	this.map_element = document.getElementById(map_id);
 	this.textfield_element = document.getElementById(textfield_id);
 	this.properties_element = document.getElementById(properties_id);
-	
+
+	var attribution = new OpenLayers.Control.Attribution({
+		draw: function()
+		{
+			var div = OpenLayers.Control.Attribution.prototype.draw.apply(this, arguments);
+			div.style.bottom = "0em";
+			div.style.right = null;
+			div.style.left = "3px";
+			return div;
+		}
+	});
+
 	this.map = new OpenLayers.Map(map_id, {
 		controls:[
 			new OpenLayers.Control.Navigation(),
 			new OpenLayers.Control.PanZoomBar(),
 			new OpenLayers.Control.PanZoom(),
-			new OpenLayers.Control.Attribution(),
+			attribution,
 			new OpenLayers.Control.MousePosition({displayProjection: epsg4326})
 		],
 		maxExtent: new OpenLayers.Bounds(-20037508.34,-20037508.34,20037508.34,20037508.34),
@@ -244,16 +253,20 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 
 	if (edit)
 	{
+		var select = new OpenLayers.Control.SelectFeature(this.vectors);
+
 		// select handlers
 		var featureadded = function(ev)
 		{
-			ev.feature.label="";
-			ev.feature.article="";
+			if (ev.feature.attributes.states) return;
+
+			ev.feature.attributes.label="";
+			ev.feature.attributes.article="";
 			ev.feature.attributes.islink="false";
 			ev.feature.attributes.states={};
 
 			// set default values
-			for (var j in symbols) ev.feature.attributes.states[j]="?";
+			for (var j in symbols) ev.feature.attributes.states[j]="";
 		};
 
 		var featureclicked = function(ev)
@@ -274,19 +287,21 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 			button.setAttribute("value", "delete");
 			form.appendChild(button);
 
-			var button_onclick = function(layer, feature)
+			var button_onclick = function(scope, control, feature)
 			{
-				var layer=layer;
+				var scope=scope;
+				var control=control;
 				var feature=feature;
 
 				this.run = function()
-				{// geht noch nicht
-					layer.eraseFeatures([feature]);
-					clear_properties();
+				{
+					control.unselect(feature);
+					scope.vectors.removeFeatures([feature]);
+					scope.clear_properties();
 				}
 			};
 
-			var callback = new button_onclick(this.vectors, ev.feature);
+			var callback = new button_onclick(this, select, ev.feature);
 			button.onclick = callback.run;
 
 			// label
@@ -345,11 +360,15 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 			table.appendChild(tr);
 			var td=document.createElement("td");
 			tr.appendChild(td);
+
+			headers = {}
 			for (symbol in symbols)
 			{
-				var td=document.createElement("th");
-				td.appendChild(document.createTextNode(symbols[symbol].name));
-				tr.appendChild(td);
+				headers[symbol]=document.createElement("th");
+//				td.appendChild(document.createTextNode(symbols[symbol]));
+				var state=ev.feature.attributes.states[symbol];
+				headers[symbol].appendChild(this.images[symbol][state]);
+				tr.appendChild(headers[symbol]);
 			}
 
 			// one row per state
@@ -374,19 +393,23 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 						radiobox.setAttribute("checked","checked");
 					}
 
-					var radio_onchange = function(feature,symbol,state)
+					var radio_onchange = function(feature,images,header,symbol,state)
 					{
 						var feature=feature;
+						var images=images;
+						var header=header;
 						var symbol=symbol;
 						var state=state;
 
 						this.run = function()
 						{
 							feature.attributes.states[symbol]=state;
+							header.removeChild(header.firstChild);
+							header.appendChild(images[symbol][state]);
 						}
 					};
 
-					var callback = new radio_onchange(ev.feature,symbol,state);
+					var callback = new radio_onchange(ev.feature,this.images,headers[symbol],symbol,state);
 					radiobox.onchange=callback.run;
 
 					var td=document.createElement("td");
@@ -399,10 +422,9 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 			this.properties_element.style.display = "block";
 		};
 
-		var select = new OpenLayers.Control.SelectFeature(this.vectors);
 		this.vectors.events.on({
 			"featureselected": featureclicked,
-			"featureunselected": clear_properties,
+			"featureunselected": this.clear_properties,
 			"featureadded": featureadded,
 			scope: this
 		});
@@ -410,13 +432,21 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 		select.activate();
 
 		// editing toolbar
-		this.map.addControl(new OpenLayers.Control.EditingToolbar(this.vectors));
+		var navigation = new OpenLayers.Control.Navigation();
+		var polygon = new OpenLayers.Control.DrawFeature(this.vectors, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
+		var panel = new OpenLayers.Control.Panel({defaultControl: navigation, displayClass: 'olControlEditingToolbar'});
+		panel.addControls([navigation,polygon]);
+		this.map.addControl(panel);
 	}
 	else
 	{
 		var featureclicked = function(ev)
 		{
-			if (ev.feature.attributes.islink=="false") return;
+			if (ev.feature.attributes.islink=="false")
+			{
+				this.unselect(ev.feature);
+				return;
+			}
 
 			var link = wgArticlePath.replace('$1', ev.feature.attributes.article);
 			window.location.href = link;
@@ -453,7 +483,7 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 			{
 				var td=document.createElement("td");
 				state = ev.feature.attributes.states[symbol];
-				td.appendChild(document.createTextNode(symbol+"="+state));
+				td.appendChild(this.images[symbol][state]);
 				tr.appendChild(td);
 			}
 
@@ -464,11 +494,11 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 		var styleMap = new OpenLayers.StyleMap({
 			"default":OpenLayers.Feature.Vector.style["default"],
 			"temporary":OpenLayers.Feature.Vector.style["temporary"],
-			"select":OpenLayers.Feature.Vector.style["default"]
+			"select":OpenLayers.Feature.Vector.style["select"]
 		});
 
 		styleMap.addUniqueValueRules("temporary", "islink", {
-			"true":{cursor:"pointer", fillOpacity:.7, strokeColor:"#000", strokeWidth:2},
+			"true":{cursor:"pointer", fillOpacity:0.7, strokeColor:"#000", strokeWidth:2},
 			"false":{cursor:""}
 		});
 
@@ -482,17 +512,36 @@ function mappingstatusmap(map_id, textfield_id, properties_id, edit)
 		
 		highlight.events.on({
 			"featurehighlighted": display_properties,
-			"featureunhighlighted": clear_properties,
+			"featureunhighlighted": this.clear_properties,
 			scope: this
 		});
 
 		var select = new OpenLayers.Control.SelectFeature(this.vectors);
-		this.vectors.events.on({"featureselected": featureclicked});
+		this.vectors.events.on({
+			"featureselected": featureclicked,
+			scope: select
+		});
 
 		this.map.addControl(highlight);
 		this.map.addControl(select);
 		highlight.activate();
 		select.activate();
+	}
+
+	// preload images
+	this.images = {};
+	for (symbol in symbols)
+	{
+		this.images[symbol]={};
+
+		for (state in states)
+		{
+			this.images[symbol][state] = new Image();
+			this.images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
+			var title = symbols[symbol]+": "+states[state];
+			this.images[symbol][state].setAttribute("alt", title);
+			this.images[symbol][state].setAttribute("title", title);
+		}
 	}
 
 	this.set_map_from_textfield();

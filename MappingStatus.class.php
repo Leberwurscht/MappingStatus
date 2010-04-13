@@ -51,11 +51,15 @@ class MappingStatus {
 		}
 		else $id=(int)$argv["id"];
 
+		$root = "$wgScriptPath/extensions/mappingstatus";
+		$htmlroot = htmlentities($root);
+		$jsroot = addslashes($root);
+
 		$output = "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
-		$output .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
+		$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 		$output .= "<script type='text/javascript'>\n";
-		$output .= "\taddOnloadHook(function(){ new mappingstatusmap('mappingstatusmap_$id','mappingstatusdata_$id', 'mappingstatusproperties_$id',false); });\n";
+		$output .= "\taddOnloadHook(function(){ new mappingstatusmap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id', 'mappingstatusproperties_$id',false); });\n";
 		$output .= "</script>\n";
 
 		$output .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap_$id'></div>\n";
@@ -66,6 +70,7 @@ class MappingStatus {
 		{
 			$sp = Title::newFromText("Special:MappingStatusEdit");
 			$editlink = ( $sp->escapeLocalURL() )."/".( $wgParser->getTitle()->getSubpageUrlForm() )."?mappingstatusmapid=$id";
+			$editlink = htmlentities($editlink);
 
 			$output .= "<a href='$editlink'>EDIT</a>";
 		}
@@ -74,7 +79,7 @@ class MappingStatus {
 
 		$wgHooks['ParserAfterTidy'][] = array("MappingStatus::afterTidy",array($marker,$output));
 
-		return $marker;
+		return "<div>$marker</div>";
 	}
 
 	static function afterTidy($data,$parser,&$text)

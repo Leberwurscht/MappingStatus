@@ -26,11 +26,10 @@ class MappingStatusEdit extends SpecialPage {
 
 		$article  = new Article($title);
 
-
 		if ($action=="save")
 		{
 			$editor = new EditPage($article);
-			$editor->summary = "updated mappingstatus";
+			$editor->summary = "updated mappingstatus of map with $id";
 			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
 
 			$detail=false;
@@ -52,16 +51,21 @@ class MappingStatusEdit extends SpecialPage {
 			}
 		}
 
+		$root = "$wgScriptPath/extensions/mappingstatus";
+		$htmlroot = htmlentities($root);
+		$jsroot = addslashes($root);
+
 		$status=$this->getMappingStatus($article,$id);
-		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&amp;mappingstatusmapid=$id";
+		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&mappingstatusmapid=$id";
+		$url = htmlentities($url);
 
 		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
-		$form .= "<script type='text/javascript' src='$wgScriptPath/extensions/mappingstatus/mappingstatus.js'></script>\n";
+		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 		$form .= "<script type='text/javascript'>\n";
 		$form .= "\tvar mappingstatusmap;\n";
 		$form .= "\taddOnloadHook(function(){\n";
-		$form .= "\t\tmappingstatusmap=new mappingstatusmap('mappingstatusmap','mappingstatusdata','mappingstatusproperties',true);\n";
+		$form .= "\t\tmappingstatusmap=new mappingstatusmap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusproperties',true);\n";
 //		$form .= "\t\tform = document.getElementById('editform');\n";
 //		$form .= "\t\taddHandler(form,'submit',mappingstatusmap.update_data);\n";
 		$form .= "\t});\n";
@@ -75,20 +79,6 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
 		$wgOut->addHTML($form);
-	}
-
-	function getstatusselect($id)
-	{
-		$html = "<select id='$id'>\n";
-		$html .= "\t<option value='-'>Status unbekannt</option>\n";
-		$html .= "\t<option value='0'>keine oder wenige Daten</option>\n";
-		$html .= "\t<option value='1'>teilweise Daten</option>\n";
-		$html .= "\t<option value='2'>größtenteils vollständig</option>\n";
-		$html .= "\t<option value='3'>alle Daten</option>\n";
-		$html .= "\t<option value='4'>besichtigt und bestätigt von mindestens zwei Mappern</option>\n";
-		$html .= "\t<option value='X'>nicht vorhanden</option>\n";
-		$html .= "</select>\n";
-		return $html;
 	}
 
 	function getMappingStatus($article,$id)
