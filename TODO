@@ -1,4 +1,8 @@
 legend
+translation
+test in other browsers
+clean inserting of scripts (wgOut->addScript), prevent multiple including of scripts
+when possible redirect to right editing page when logging in
 
 DONE allow to choose symbols
 DONE special characters in label and article!

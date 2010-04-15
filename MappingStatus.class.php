@@ -62,21 +62,34 @@ class MappingStatus {
 		$output = "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
-		$output .= "<script type='text/javascript'>\n";
-		$output .= "\taddOnloadHook(function(){ new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id'); });\n";
-		$output .= "</script>\n";
+//		$output .= "<script type='text/javascript'>\n";
+//		$output .= "\taddOnloadHook(function(){ new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id'); });\n";
+//		$output .= "</script>\n";
 
 		$output .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap_$id'></div>\n";
 		$output .= "<textarea rows='10' cols='80' readonly='readonly' id='mappingstatusdata_$id'>$status</textarea>\n";
+//		$output .= "<script>document.getElementById('mappingstatusdata_$id').style.display='none';</script>\n";
 
+/*		$output .= "<div style='text-align:right; background-color: #eee;' id='mappingstatuslinks_$id'>\n";
+		$output .= "\t<a href='#mappingstatuslegend_$id' onclick=\"MappingStatusMap.toggle_visibility('mappingstatuslegend_$id');\">Legend</a>";
+		$output .= $editlink;
+		$output .= "\n</div>\n";*/
+
+		$editlink_id = "";
 		if (!$wgParser->getTitle()->getUserPermissionsErrors('edit', $wgUser))
 		{
 			$sp = Title::newFromText("Special:MappingStatusEdit");
 			$editlink = ( $sp->escapeLocalURL() )."/".( $wgParser->getTitle()->getSubpageUrlForm() )."?mappingstatusmapid=$id";
 			$editlink = htmlentities($editlink);
 
-			$output .= "<a href='$editlink'>EDIT</a>";
+			$editlink_id = "mappingstatusedit_$id";
+			$output .= "<a href='$editlink' id='$editlink_id'>Edit</a>";
 		}
+
+		$output .= "<script>new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id').add_legend('$editlink_id');</script>\n";
+
+//		$output .= "<div style='display:none; background-color: #eee; border: 1px solid #aaa;' id='mappingstatuslegend_$id'>\n";
+//		$output .= "</div>\n";
 
 		$marker = "xx-mappingstatus-marker-$id-xx";
 

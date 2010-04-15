@@ -51,7 +51,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 			else if (words[0]=="symbols")
 			{
-				all_symbols = this.symbols;
+				var all_symbols = this.symbols;
 				this.symbols = {};
 
 				for (var j=1; j<words.length; j++)
@@ -216,6 +216,145 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 		this.textfield_element.value = content;
 	};
+
+	this.add_legend = function(editlink_id)
+	{
+		var legend;
+		var legendlink;
+
+		var sample;
+		for (symbol in this.symbols)
+		{
+			sample=symbol;
+			break;
+		}
+
+		if (sample)
+		{
+			// make legend
+			var legend_id = this.map_element.getAttribute("id")+"_legend";
+			legend = document.createElement("div");
+			legend.style.display="none";
+			legend.setAttribute("id", legend_id);
+
+			var container = document.createElement("table");
+			container.setAttribute("style", "border: 5px solid #eee;");
+			legend.appendChild(container);
+
+			var containertr = document.createElement("tr");
+			container.appendChild(containertr);
+
+			var containertd = document.createElement("td");
+			containertd.setAttribute("style", "vertical-align:top; padding: 1em;");
+			containertr.appendChild(containertd);
+			var table = document.createElement("table");
+			containertd.appendChild(table);
+
+			var caption = document.createElement("caption");
+			caption.setAttribute("style", "font-weight:bold;");
+			caption.appendChild(document.createTextNode("States"));
+			table.appendChild(caption);
+
+			for (state in this.states)
+			{
+				var tr = document.createElement("tr");
+				table.appendChild(tr);
+
+				var th = document.createElement("th");
+				tr.appendChild(th);
+
+				var img = Image();
+				img.src = this.preloaded_images[sample][state].src;
+				img.setAttribute("alt",state);
+				th.appendChild(img);
+
+				var td = document.createElement("td");
+				td.appendChild(document.createTextNode(this.states[state]));
+				tr.appendChild(td);
+			}
+
+			var containertd = document.createElement("td");
+			containertd.setAttribute("style", "vertical-align:top; padding: 1em;");
+			containertr.appendChild(containertd);
+			var table = document.createElement("table");
+			containertd.appendChild(table);
+
+			var caption = document.createElement("caption");
+			caption.setAttribute("style", "font-weight:bold;");
+			caption.appendChild(document.createTextNode("Symbols"));
+			table.appendChild(caption);
+
+			for (symbol in this.symbols)
+			{
+				var tr = document.createElement("tr");
+				table.appendChild(tr);
+
+				var th = document.createElement("th");
+				tr.appendChild(th);
+
+				var img = Image();
+				img.src = this.preloaded_images[symbol][""].src;
+				img.setAttribute("alt",symbol);
+				th.appendChild(img);
+
+				var td = document.createElement("td");
+				td.appendChild(document.createTextNode(this.symbols[symbol]));
+				tr.appendChild(td);
+			}
+
+			// make link for buttons div
+			legendlink = document.createElement("a");
+			legendlink.setAttribute("href","#"+legend_id);
+			legendlink.appendChild(document.createTextNode("Legend"));
+
+			// callback for link
+			var toggle_visibility = function(element)
+			{
+				var element = element;
+
+				this.run = function()
+				{
+					if (element.style.display=="none") element.style.display = "block";
+					else element.style.display = "none";
+				};
+			};
+
+			var callback = new toggle_visibility(legend);
+			legendlink.onclick = callback.run;
+		}
+
+		// make buttons div
+		var buttons = document.createElement("div");
+		buttons.setAttribute("style","background-color:#eee; text-align:right;");
+		buttons.style.width = this.map_element.style.width;
+
+		if (legendlink)
+		{
+			buttons.appendChild(legendlink);
+
+			if (editlink_id)
+			{
+				buttons.appendChild(document.createTextNode(" | "));
+				buttons.appendChild(document.getElementById(editlink_id));
+			}
+		}
+		else if (editlink_id)
+		{
+			buttons.appendChild(document.getElementById(editlink_id));
+		}
+
+		// place buttons div and legend below map
+		if (this.map_element.nextSibling)
+		{
+			if (legend) this.map_element.parentNode.insertBefore(legend, this.map_element.nextSibling);
+			this.map_element.parentNode.insertBefore(buttons, this.map_element.nextSibling);
+		}
+		else
+		{
+			this.map_element.parentNode.appendChild(buttons);
+			if (legend) this.map_element.parentNode.appendChild(legend);
+		}
+	}
 
 	// CALLBACKS
 	this.clear_properties = function(ev)
@@ -474,4 +613,12 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		// create StatusInfo object
 		this.statusinfo = new StatusInfo(this, status_element, label_element);
 	}
+}
+
+MappingStatusMap.toggle_visibility = function(element_id)
+{
+	var element = document.getElementById(element_id);
+
+	if (element.style.display=="none") element.style.display = "block";
+	else element.style.display = "none";
 }

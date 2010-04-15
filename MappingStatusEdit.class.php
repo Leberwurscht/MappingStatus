@@ -65,12 +65,12 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";
-		$form .= "<script type='text/javascript'>\n";
+/*		$form .= "<script type='text/javascript'>\n";
 		$form .= "\tvar mappingstatusmap;\n";
 		$form .= "\taddOnloadHook(function(){\n";
 		$form .= "\t\tmappingstatusmap=new MappingStatusMap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusedit');\n";
 		$form .= "\t});\n";
-		$form .= "</script>\n";
+		$form .= "</script>\n";*/
 
 		$form .= "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
@@ -78,6 +78,10 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
 		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
+
+		$form .= "<script type='text/javascript'>\n";
+		$form .= "\tvar mappingstatusmap = new MappingStatusMap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusedit');\n";
+		$form .= "</script>\n";
 
 		$wgOut->addHTML($form);
 	}
