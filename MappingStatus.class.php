@@ -59,11 +59,10 @@ class MappingStatus {
 		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 		$output .= "<script type='text/javascript'>\n";
-		$output .= "\taddOnloadHook(function(){ new mappingstatusmap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id', 'mappingstatusproperties_$id',false); });\n";
+		$output .= "\taddOnloadHook(function(){ new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id'); });\n";
 		$output .= "</script>\n";
 
 		$output .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap_$id'></div>\n";
-		$output .= "<div style='display:none;' id='mappingstatusproperties_$id'></div>\n";
 		$output .= "<textarea rows='10' cols='80' readonly='readonly' id='mappingstatusdata_$id'>$status</textarea>\n";
 
 		if (!$wgParser->getTitle()->getUserPermissionsErrors('edit', $wgUser))

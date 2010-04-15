@@ -1,8 +1,9 @@
-update textfield on submit
-make textfield invisible
+legend
 enable custom status targets
-hover popup near mouse
-prettier editing div
 
+DONE make textfield invisible
+DONE prettier editing div
+DONE update textfield on submit
 DONE use icons for status
 DONE remove redundant buttons from edittoolbar
+DONE display status inside of map on hover

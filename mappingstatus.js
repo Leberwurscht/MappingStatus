@@ -1,19 +1,17 @@
-function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
+function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 {
-	// definitions
+	// DEFINITIONS
 	var epsg4326 = new OpenLayers.Projection("EPSG:4326");
-	var symbols = {"Labelled":"street names", "Car":"streets"};
-	var states = {"":"unknown", "0":"nothing", "1":"partial", "2":"nearly everything", "3":"done", "4":"double-checked", "X":"don't exist"};
 
-	// methods
+	// METHODS
 	this.set_map_from_textfield = function()
 	{
 		// default values
 		latitude=51.53;
 		longitude=0.14;
 		zoom=5;
-		width=400;
-		height=400;
+		width=450;
+		height=450;
 
 		// clear vector layer
 		this.vectors.removeFeatures(this.vectors.features);
@@ -122,7 +120,7 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 				this.vectors.addFeatures([feature]);
 
 				// set default values
-				for (var j in symbols) feature.attributes.states[j]="";
+				for (var j in this.symbols) feature.attributes.states[j]="";
 
 				// get states
 				var states = line.replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
@@ -202,7 +200,7 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 		this.textfield_element.value = content;
 	};
 
-	// callbacks
+	// CALLBACKS
 	this.clear_properties = function(ev)
 	{
 		// clear properties_element
@@ -215,11 +213,41 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 		this.properties_element.style.display = "none";
 	}
 
-	// constructor
+	// CONSTRUCTOR
+
+	// predefined symbols and states
+	this.symbols = {
+		"Labelled":"street names",
+		"Car":"streets",
+		"Bike":"bike paths",
+		"Foot":"footpaths",
+		"Transport":"public transport",
+		"Public":"public buildings",
+		"Fuel":"fuel stations",
+		"Restaurant":"restaurants and hotels",
+		"Tourist":"sights",
+		"Nature":"natural areas as rivers, forest",
+		"Housenumbers":"housenumbers"
+	};
+
+	this.states = {
+		"":"unknown",
+		"0":"nothing",
+		"1":"partial",
+		"2":"nearly everything",
+		"3":"done",	
+		"4":"double-checked",
+		"X":"don't exist"
+	};
+
+	// get html elements
 	this.map_element = document.getElementById(map_id);
 	this.textfield_element = document.getElementById(textfield_id);
-	this.properties_element = document.getElementById(properties_id);
 
+	// make textfield invisible
+	this.textfield_element.style.display="none";
+
+	// adjust position of attribution control
 	var attribution = new OpenLayers.Control.Attribution({
 		draw: function()
 		{
@@ -231,6 +259,7 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 		}
 	});
 
+	// create map
 	this.map = new OpenLayers.Map(map_id, {
 		controls:[
 			new OpenLayers.Control.Navigation(),
@@ -245,202 +274,107 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 		projection: "EPSG:900913"
 	});
 
+	// add layers
 	var mapniklayer = new OpenLayers.Layer.OSM.Mapnik("Mapnik");
 	this.map.addLayer(mapniklayer);
 
 	this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
 	this.map.addLayer(this.vectors);
 
-	if (edit)
+	// read textfield
+	this.set_map_from_textfield();
+
+	// preload images
+	this.preloaded_images = {};
+	for (symbol in this.symbols)
 	{
-		var select = new OpenLayers.Control.SelectFeature(this.vectors);
+		this.preloaded_images[symbol]={};
 
-		// select handlers
-		var featureadded = function(ev)
+		for (state in this.states)
 		{
-			if (ev.feature.attributes.states) return;
+			this.preloaded_images[symbol][state] = new Image();
+			this.preloaded_images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
 
-			ev.feature.attributes.label="";
-			ev.feature.attributes.article="";
-			ev.feature.attributes.islink="false";
-			ev.feature.attributes.states={};
-
-			// set default values
-			for (var j in symbols) ev.feature.attributes.states[j]="";
-		};
-
-		var featureclicked = function(ev)
-		{
-			// clear properties_element
-			while (this.properties_element.hasChildNodes())
-			{
-				this.properties_element.removeChild(this.properties_element.firstChild);
-			}
-
-			// form
-			var form = document.createElement("form");
-			this.properties_element.appendChild(form);
-
-			// delete button
-			var button = document.createElement("input");
-			button.setAttribute("type", "button");
-			button.setAttribute("value", "delete");
-			form.appendChild(button);
-
-			var button_onclick = function(scope, control, feature)
-			{
-				var scope=scope;
-				var control=control;
-				var feature=feature;
-
-				this.run = function()
-				{
-					control.unselect(feature);
-					scope.vectors.removeFeatures([feature]);
-					scope.clear_properties();
-				}
-			};
-
-			var callback = new button_onclick(this, select, ev.feature);
-			button.onclick = callback.run;
-
-			// label
-			var label_p = document.createElement("p");
-			label_p.appendChild(document.createTextNode("Label"));
-			var label = document.createElement("input");
-			label.setAttribute("type", "text");
-			label.setAttribute("value", ev.feature.attributes.label);
-			label_p.appendChild(label);
-			form.appendChild(label_p);
-
-			var label_onblur = function(feature, element)
-			{
-				var feature=feature;
-				var element=element;
-
-				this.run = function()
-				{
-					feature.attributes.label=element.value;
-				}
-			};
-
-			var callback = new label_onblur(ev.feature, label);
-			label.onblur = callback.run;
-
-			// article
-			var article_p = document.createElement("p");
-			article_p.appendChild(document.createTextNode("Article"));
-			var article = document.createElement("input");
-			article.setAttribute("type", "text");
-			article.setAttribute("value", ev.feature.attributes.article);
-			article_p.appendChild(article);
-			form.appendChild(article_p);
-
-			var article_onblur = function(feature, element)
-			{
-				var feature=feature;
-				var element=element;
-
-				this.run = function()
-				{
-					feature.attributes.article=element.value;
-				}
-			};
-
-			var callback = new article_onblur(ev.feature, article);
-			article.onblur = callback.run;
-
-			// create table
-			var table = document.createElement("table");
-			table.setAttribute("border","1");
-			form.appendChild(table);
-
-			// header row
-			var tr = document.createElement("tr");
-			table.appendChild(tr);
-			var td=document.createElement("td");
-			tr.appendChild(td);
-
-			headers = {}
-			for (symbol in symbols)
-			{
-				headers[symbol]=document.createElement("th");
-//				td.appendChild(document.createTextNode(symbols[symbol]));
-				var state=ev.feature.attributes.states[symbol];
-				headers[symbol].appendChild(this.images[symbol][state]);
-				tr.appendChild(headers[symbol]);
-			}
-
-			// one row per state
-			for (state in states)
-			{
-				var tr = document.createElement("tr");
-				table.appendChild(tr);
-				var td=document.createElement("th");
-				td.appendChild(document.createTextNode(states[state]));
-				tr.appendChild(td);
-
-				// create radioboxes
-				for (symbol in symbols)
-				{
-					var radiobox = document.createElement("input");
-					radiobox.setAttribute("type","radio");
-					radiobox.setAttribute("name",this.properties_element.id+"_"+symbol);
-					radiobox.setAttribute("value",state);
-
-					if (ev.feature.attributes.states[symbol]==state)
-					{
-						radiobox.setAttribute("checked","checked");
-					}
-
-					var radio_onchange = function(feature,images,header,symbol,state)
-					{
-						var feature=feature;
-						var images=images;
-						var header=header;
-						var symbol=symbol;
-						var state=state;
-
-						this.run = function()
-						{
-							feature.attributes.states[symbol]=state;
-							header.removeChild(header.firstChild);
-							header.appendChild(images[symbol][state]);
-						}
-					};
-
-					var callback = new radio_onchange(ev.feature,this.images,headers[symbol],symbol,state);
-					radiobox.onchange=callback.run;
-
-					var td=document.createElement("td");
-					td.appendChild(radiobox);
-					tr.appendChild(td);
-				}
-			}
-
-			// make visible
-			this.properties_element.style.display = "block";
-		};
-
-		this.vectors.events.on({
-			"featureselected": featureclicked,
-			"featureunselected": this.clear_properties,
-			"featureadded": featureadded,
-			scope: this
-		});
-		this.map.addControl(select);
-		select.activate();
-
-		// editing toolbar
-		var navigation = new OpenLayers.Control.Navigation();
-		var polygon = new OpenLayers.Control.DrawFeature(this.vectors, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
-		var panel = new OpenLayers.Control.Panel({defaultControl: navigation, displayClass: 'olControlEditingToolbar'});
-		panel.addControls([navigation,polygon]);
-		this.map.addControl(panel);
+			var title = this.symbols[symbol]+": "+this.states[state];
+			this.preloaded_images[symbol][state].setAttribute("alt", title);
+			this.preloaded_images[symbol][state].setAttribute("title", title);
+		}
 	}
-	else
+
+	if (statusedit_id) // editing
 	{
-		var featureclicked = function(ev)
+		if (!this.edit) alert("You must load mappingstatusedit.js in order to be able to edit a map!");
+
+		statusedit_element = document.getElementById(statusedit_id);
+		this.edit(statusedit_element);
+	}
+	else // viewing
+	{
+		// StatusInfo class
+		var StatusInfo = function(mappingstatusmap, status_element, label_element)
+		{
+			this.show_feature = function(feature)
+			{
+				while (this.status_element.hasChildNodes())
+					this.status_element.removeChild(this.status_element.firstChild);
+
+				while (this.label_element.hasChildNodes())
+					this.label_element.removeChild(this.label_element.firstChild);
+
+				for (symbol in this.mappingstatusmap.symbols)
+				{
+					state = feature.attributes.states[symbol];
+					this.status_element.appendChild(this.mappingstatusmap.preloaded_images[symbol][state]);
+				}
+
+				if (feature.attributes.article)
+				{
+					this.label_element.style.color = "#00f";
+					this.label_element.style.textDecoration = "underline";
+				}
+				else
+				{
+					this.label_element.style.color = "#000";
+					this.label_element.style.textDecoration = "none";
+				}
+
+				if (feature.attributes.label)
+				{
+					this.label_element.appendChild(
+						document.createTextNode(feature.attributes.label)
+					);
+					this.label_element.style.display="block";
+				}
+				else if (feature.attributes.article)
+				{
+					this.label_element.appendChild(
+						document.createTextNode(feature.attributes.article)
+					);
+					this.label_element.style.display="block";
+				}
+
+				this.status_element.style.display="block";
+			}
+
+			this.hide = function()
+			{
+				this.status_element.style.display="none";
+				this.label_element.style.display="none";
+			}
+
+			this.mappingstatusmap = mappingstatusmap;
+
+			this.status_element = status_element;
+			this.status_element.style.backgroundColor="#fff";
+
+			this.label_element = label_element;
+			this.label_element.style.backgroundColor="#fff";
+
+			this.hide();
+		}
+
+		// callbacks
+		var on_select = function(ev) // set scope to the SelectFeature control when registering this callback!
 		{
 			if (ev.feature.attributes.islink=="false")
 			{
@@ -450,50 +384,19 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 
 			var link = wgArticlePath.replace('$1', ev.feature.attributes.article);
 			window.location.href = link;
-		};
+		}
 
-		var display_properties = function(ev)
+		var on_highlight = function(ev)
 		{
-			// clear properties_element
-			while (this.properties_element.hasChildNodes())
-			{
-				this.properties_element.removeChild(this.properties_element.firstChild);
-			}
+			this.statusinfo.show_feature(ev.feature);
+		}
 
-			// create table
-			var table = document.createElement("table");
-			table.style.backgroundColor="#fff";
-			table.setAttribute("border","0");
-			this.properties_element.appendChild(table);
-			var tr = document.createElement("tr");
-			table.appendChild(tr);
-			for (var symbol in symbols)
-			{
-				var td=document.createElement("td");
-				state = ev.feature.attributes.states[symbol];
-				td.appendChild(this.images[symbol][state]);
-				tr.appendChild(td);
-			}
+		var on_unhighlight = function(ev)
+		{
+			this.statusinfo.hide();
+		}
 
-			if (ev.feature.attributes.label)
-			{
-				var label = document.createElement("p");
-				label.style.backgroundColor="#fff";
-				label.appendChild(document.createTextNode(ev.feature.attributes.label));
-				this.properties_element.appendChild(label);
-			}
-			else if (ev.feature.attributes.article)
-			{
-				var label = document.createElement("p");
-				label.style.backgroundColor="#fff";
-				label.appendChild(document.createTextNode(ev.feature.attributes.article));
-				this.properties_element.appendChild(label);
-			}
-
-			// make visible
-			this.properties_element.style.display = "block";
-		};
-
+		// styles of highlighted and selected features with and without hyperlink
 		var styleMap = new OpenLayers.StyleMap({
 			"default":OpenLayers.Feature.Vector.style["default"],
 			"temporary":OpenLayers.Feature.Vector.style["temporary"],
@@ -507,50 +410,51 @@ function mappingstatusmap(rootdir, map_id, textfield_id, properties_id, edit)
 
 		this.vectors.styleMap=styleMap;
 
+		// SelectFeature controls for hovering and clicking
 		var highlight = new OpenLayers.Control.SelectFeature(this.vectors, {
 			hover:true,
 			highlightOnly: true,
 			renderIntent: "temporary"
 		});
-		
-		highlight.events.on({
-			"featurehighlighted": display_properties,
-			"featureunhighlighted": this.clear_properties,
-			scope: this
-		});
-
+	
 		var select = new OpenLayers.Control.SelectFeature(this.vectors);
-		this.vectors.events.on({
-			"featureselected": featureclicked,
-			scope: select
-		});
-
-		this.map.viewPortDiv.appendChild(this.properties_element);
-		this.properties_element.style.position="absolute";
-		this.properties_element.style.right="0px";
-		this.properties_element.style.zIndex=this.map.Z_INDEX_BASE['Popup']-1;
 
 		this.map.addControl(highlight);
 		this.map.addControl(select);
+
 		highlight.activate();
 		select.activate();
+
+		// hovering events
+		highlight.events.on({
+			"featurehighlighted": on_highlight,
+			"featureunhighlighted": on_unhighlight,
+			scope: this
+		});
+
+		// clicking event
+		this.vectors.events.on({
+			"featureselected": on_select,
+			scope: select
+		});
+
+		// create div that will contain the status icons
+		status_element = document.createElement("div");
+		status_element.style.position = "absolute";
+		status_element.style.right = "0px";
+		status_element.style.top = "0px";
+		status_element.style.zIndex = this.map.Z_INDEX_BASE['Popup']-1;
+		this.map.viewPortDiv.appendChild(status_element);
+
+		// create div that will contain the polygon label
+		label_element = document.createElement("div");
+		label_element.style.position = "absolute";
+		label_element.style.right = "0px";
+		label_element.style.top = "25px";
+		label_element.style.zIndex = this.map.Z_INDEX_BASE['Popup']-1;
+		this.map.viewPortDiv.appendChild(label_element);
+
+		// create StatusInfo object
+		this.statusinfo = new StatusInfo(this, status_element, label_element);
 	}
-
-	// preload images
-	this.images = {};
-	for (symbol in symbols)
-	{
-		this.images[symbol]={};
-
-		for (state in states)
-		{
-			this.images[symbol][state] = new Image();
-			this.images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
-			var title = symbols[symbol]+": "+states[state];
-			this.images[symbol][state].setAttribute("alt", title);
-			this.images[symbol][state].setAttribute("title", title);
-		}
-	}
-
-	this.set_map_from_textfield();
 }

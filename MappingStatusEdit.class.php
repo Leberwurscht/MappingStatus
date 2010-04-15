@@ -62,22 +62,21 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
+		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";
 		$form .= "<script type='text/javascript'>\n";
 		$form .= "\tvar mappingstatusmap;\n";
 		$form .= "\taddOnloadHook(function(){\n";
-		$form .= "\t\tmappingstatusmap=new mappingstatusmap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusproperties',true);\n";
-//		$form .= "\t\tform = document.getElementById('editform');\n";
-//		$form .= "\t\taddHandler(form,'submit',mappingstatusmap.update_data);\n";
+		$form .= "\t\tmappingstatusmap=new MappingStatusMap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusedit');\n";
 		$form .= "\t});\n";
 		$form .= "</script>\n";
 
-		$form .= "<form action='$url' method='post' id='editform'>\n";
+		$form .= "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
-		$form .= "<div style='display:none;' id='mappingstatusproperties'></div>\n";
+		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
-		$form .= "<input type='button' value='Update' onclick='mappingstatusmap.set_textfield_from_map();'/>\n";
 		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
+
 		$wgOut->addHTML($form);
 	}
 

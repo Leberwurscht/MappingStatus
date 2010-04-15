@@ -1,209 +1,218 @@
-mappingstatus.prototype.edit = function(properties_element)
+MappingStatusMap.prototype.edit = function(statusedit_element)
 {
-
-	var editingwindow = function()
+	// StatusEdit class
+	var StatusEdit = function(mappingstatusmap, statusedit_element)
 	{
-		// methods
-		// callbacks
-		// contructor
-		this.element = document.createElement("form");
-	}
-
-
-	// select handlers
-	var featureadded = function(ev)
-	{
-		if (ev.feature.attributes.states) return;
-
-		ev.feature.attributes.label="";
-		ev.feature.attributes.article="";
-		ev.feature.attributes.islink="false";
-		ev.feature.attributes.states={};
-
-		// set default values
-		for (var j in symbols) ev.feature.attributes.states[j]="";
-	};
-
-	var featureclicked = function(ev)
-	{
-		// clear properties_element
-		while (this.properties_element.hasChildNodes())
+		// METHODS
+		this.show_feature = function(feature)
 		{
-			this.properties_element.removeChild(this.properties_element.firstChild);
-		}
+			this.update_feature();
 
-		// form
-		var form = document.createElement("form");
-		this.properties_element.appendChild(form);
+			this.feature = feature;
+			this.states = {};
+
+			this.label_element.value = feature.attributes.label;
+			this.article_element.value = feature.attributes.article;
+
+			for (symbol in feature.attributes.states)
+			{
+				// set image
+				if (this.headers[symbol].hasChildNodes())
+					this.headers[symbol].removeChild(this.headers[symbol].firstChild);
+
+				var state = feature.attributes.states[symbol];
+				this.states[symbol]=state;
+				this.headers[symbol].appendChild(this.mappingstatusmap.preloaded_images[symbol][state]);
+
+				// set radiobox
+				this.radioboxes[state][symbol].checked=true;
+			}
+
+			this.form.style.display="block";
+		};
+
+		this.hide = function()
+		{
+			this.update_feature();
+
+			this.feature = null;
+			this.form.style.display="none";
+		};
+
+		this.update_feature = function()
+		{
+			if (!this.feature) return;
+
+			this.feature.attributes.states = this.states;
+			this.feature.attributes.label = this.label_element.value;
+			this.feature.attributes.article = this.article_element.value;
+		};
+
+		// CONSTRUCTOR
+		this.mappingstatusmap = mappingstatusmap;
+
+		this.form = document.createElement("form");
+		this.formname = statusedit_element.getAttribute("id");
+		this.form.setAttribute("name", this.formname);
+		this.form.style.border="1px solid #000";
+		this.form.style.backgroundColor="#ccc";
 
 		// delete button
 		var button = document.createElement("input");
 		button.setAttribute("type", "button");
-		button.setAttribute("value", "delete");
-		form.appendChild(button);
+		button.setAttribute("value", "delete polygon");
+		button.setAttribute("style", "float:right;");
+		this.form.appendChild(button);
 
-		var button_onclick = function(scope, control, feature)
+		var on_delete = function(statusedit)
 		{
-			var scope=scope;
-			var control=control;
-			var feature=feature;
+			var statusedit=statusedit;
 
 			this.run = function()
 			{
-				control.unselect(feature);
-				scope.vectors.removeFeatures([feature]);
-				scope.clear_properties();
-			}
-		};
+				if (!statusedit.feature) return;
 
-		var callback = new button_onclick(this, select, ev.feature);
+				// unselect will result in this.hide being executed, so prevent
+				// this.update_feature from running by voiding statusedit.feature
+				feature = statusedit.feature;
+				statusedit.feature = null;
+
+				statusedit.mappingstatusmap.editSelectControl.unselect(feature);
+				statusedit.mappingstatusmap.vectors.removeFeatures([feature]);
+			};
+		};
+		
+		var callback = new on_delete(this);
 		button.onclick = callback.run;
 
+		// header
+		var header = document.createElement("h3");
+		header.appendChild(document.createTextNode("Edit Polygon"));
+		this.form.appendChild(header);
+
+		// table for text entries
+		var table = document.createElement("table");
+		table.style.backgroundColor="#ccc";
+		table.setAttribute("border","0");
+		this.form.appendChild(table);
+
 		// label
-		var label_p = document.createElement("p");
-		label_p.appendChild(document.createTextNode("Label"));
-		var label = document.createElement("input");
-		label.setAttribute("type", "text");
-		label.setAttribute("value", ev.feature.attributes.label);
-		label_p.appendChild(label);
-		form.appendChild(label_p);
-
-		var label_onblur = function(feature, element)
-		{
-			var feature=feature;
-			var element=element;
-
-			this.run = function()
-			{
-				feature.attributes.label=element.value;
-			}
-		};
-
-		var callback = new label_onblur(ev.feature, label);
-		label.onblur = callback.run;
+		var tr = document.createElement("tr");
+		table.appendChild(tr);
+		var td = document.createElement("td");
+		tr.appendChild(td);
+		var label = document.createElement("label");
+		label.appendChild(document.createTextNode("Label:"));
+		td.appendChild(label);
+		var td = document.createElement("td");
+		tr.appendChild(td);
+		this.label_element = document.createElement("input");
+		this.label_element.setAttribute("type", "text");
+		td.appendChild(this.label_element);
 
 		// article
-		var article_p = document.createElement("p");
-		article_p.appendChild(document.createTextNode("Article"));
-		var article = document.createElement("input");
-		article.setAttribute("type", "text");
-		article.setAttribute("value", ev.feature.attributes.article);
-		article_p.appendChild(article);
-		form.appendChild(article_p);
+		var tr = document.createElement("tr");
+		table.appendChild(tr);
+		var td = document.createElement("td");
+		tr.appendChild(td);
+		var label = document.createElement("label");
+		label.appendChild(document.createTextNode("Article:"));
+		td.appendChild(label);
+		var td = document.createElement("td");
+		tr.appendChild(td);
+		this.article_element = document.createElement("input");
+		this.article_element.setAttribute("type", "text");
+		td.appendChild(this.article_element);
 
-		var article_onblur = function(feature, element)
-		{
-			var feature=feature;
-			var element=element;
+		// -- status table --
 
-			this.run = function()
-			{
-				feature.attributes.article=element.value;
-			}
-		};
+		var header = document.createElement("h4");
+		header.appendChild(document.createTextNode("Status"));
+		this.form.appendChild(header);
 
-		var callback = new article_onblur(ev.feature, article);
-		article.onblur = callback.run;
-
-		// create table
 		var table = document.createElement("table");
-		table.setAttribute("border","1");
-		form.appendChild(table);
+		table.style.backgroundColor="#ccc";
+		table.setAttribute("border","0");
+		this.form.appendChild(table);
 
 		// header row
 		var tr = document.createElement("tr");
 		table.appendChild(tr);
-		var td=document.createElement("td");
+		var td = document.createElement("td");
 		tr.appendChild(td);
 
-		headers = {}
-		for (symbol in symbols)
+		this.headers = {}
+		for (symbol in this.mappingstatusmap.symbols)
 		{
-			headers[symbol]=document.createElement("th");
-//				td.appendChild(document.createTextNode(symbols[symbol]));
-			var state=ev.feature.attributes.states[symbol];
-			headers[symbol].appendChild(this.images[symbol][state]);
-			tr.appendChild(headers[symbol]);
+			this.headers[symbol]=document.createElement("th");
+			tr.appendChild(this.headers[symbol]);
 		}
 
-		// one row per state
-		for (state in states)
+		// radioboxes, one row per state
+		this.radioboxes={};
+
+		for (state in this.mappingstatusmap.states)
 		{
 			var tr = document.createElement("tr");
 			table.appendChild(tr);
-			var td=document.createElement("th");
-			td.appendChild(document.createTextNode(states[state]));
-			tr.appendChild(td);
 
+			var th = document.createElement("th");
+			th.style.textAlign="right";
+			tr.appendChild(th);
+
+			th.appendChild(document.createTextNode(this.mappingstatusmap.states[state]));
+
+			this.radioboxes[state]={};
 			// create radioboxes
-			for (symbol in symbols)
+			for (symbol in this.mappingstatusmap.symbols)
 			{
-				var radiobox = document.createElement("input");
-				radiobox.setAttribute("type","radio");
-				radiobox.setAttribute("name",this.properties_element.id+"_"+symbol);
-				radiobox.setAttribute("value",state);
+				this.radioboxes[state][symbol] = document.createElement("input");
+				this.radioboxes[state][symbol].setAttribute("type", "radio");
+				this.radioboxes[state][symbol].setAttribute("name", this.formname+"_status_"+symbol);
+				this.radioboxes[state][symbol].setAttribute("value", state);
 
-				if (ev.feature.attributes.states[symbol]==state)
-				{
-					radiobox.setAttribute("checked","checked");
-				}
+				var td = document.createElement("td");
+				td.appendChild(this.radioboxes[state][symbol]);
+				td.style.textAlign="center";
+				tr.appendChild(td);
 
-				var radio_onchange = function(feature,images,header,symbol,state)
+				// radiobox callback
+				var radio_onchange = function(statusedit,symbol,state)
 				{
-					var feature=feature;
-					var images=images;
-					var header=header;
+					var statusedit=statusedit;
 					var symbol=symbol;
 					var state=state;
 
 					this.run = function()
 					{
-						feature.attributes.states[symbol]=state;
-						header.removeChild(header.firstChild);
-						header.appendChild(images[symbol][state]);
+						// update internal states object
+						statusedit.states[symbol] = state;
+
+						// update image
+						statusedit.headers[symbol].removeChild(statusedit.headers[symbol].firstChild);
+						statusedit.headers[symbol].appendChild(statusedit.mappingstatusmap.preloaded_images[symbol][state]);
 					}
 				};
 
-				var callback = new radio_onchange(ev.feature,this.images,headers[symbol],symbol,state);
-				radiobox.onchange=callback.run;
-
-				var td=document.createElement("td");
-				td.appendChild(radiobox);
-				tr.appendChild(td);
+				var callback = new radio_onchange(this, symbol, state);
+				this.radioboxes[state][symbol].onchange = callback.run;
 			}
 		}
 
-		// make visible
-		this.properties_element.style.display = "block";
-	};
+		this.hide();
 
-	// properties class
-	var featureproperties = function(element)
-	{
-		this.set_feature = function(feature)
-		{
-			
-		}
-
-		// constructor
-		this.form = document.createElement("form");
-		this.form.style.border="1px solid #000";
-		this.form.style.backgroundColor="#ccc";
-		element.appendChild(this.form);
-
-		var header = document.createElement("h4");
-		header.appendChild(document.createTextNode("Edit Polygon"));
+		statusedit_element.appendChild(this.form);
 	};
 
 	// callbacks
 	var on_select = function(ev)
 	{
-		this.properties.set_feature(ev.feature);
+		this.statusedit.show_feature(ev.feature);
 	};
 
 	var on_unselect = function(ev)
 	{
-		this.properties.hide();
+		this.statusedit.hide();
 	};
 
 	var on_add = function(ev) // set default values for new features
@@ -216,11 +225,11 @@ mappingstatus.prototype.edit = function(properties_element)
 		ev.feature.attributes.states={};
 
 		// set default values
-		for (var j in symbols) ev.feature.attributes.states[j]="";
+		for (var j in this.symbols) ev.feature.attributes.states[j]="";
 	};
 
-	// create properties object
-	this.properties = new featureproperties(properties_element);
+	// create StatusEdit object
+	this.statusedit = new StatusEdit(this, statusedit_element);
 
 	// set up SelectFeature control
 	this.editSelectControl = new OpenLayers.Control.SelectFeature(this.vectors);
@@ -241,4 +250,10 @@ mappingstatus.prototype.edit = function(properties_element)
 	var panel = new OpenLayers.Control.Panel({defaultControl: navigation, displayClass: 'olControlEditingToolbar'});
 	panel.addControls([navigation,polygon]);
 	this.map.addControl(panel);
+}
+
+MappingStatusMap.prototype.onsubmit = function()
+{
+	this.statusedit.hide();
+	this.set_textfield_from_map();
 }
