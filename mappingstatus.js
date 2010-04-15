@@ -1,7 +1,22 @@
 function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 {
+	// I18N
+	this.translate_message = function(msg)
+	{
+		if (MappingStatusMapMessages[msg]) return MappingStatusMapMessages[msg];
+		else return msg;
+	}
+
+	wfMsg = this.translate_message;
+
 	// DEFINITIONS
 	var epsg4326 = new OpenLayers.Projection("EPSG:4326");
+	var layers = {
+		"mapnik":OpenLayers.Layer.OSM.Mapnik,
+		"osmarender":OpenLayers.Layer.OSM.Osmarender,
+		"maplint":OpenLayers.Layer.OSM.Maplint,
+		"cyclemap":OpenLayers.Layer.OSM.CycleMap
+	};
 
 	// METHODS
 	this.set_map_from_textfield = function()
@@ -12,6 +27,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		zoom=5;
 		width=450;
 		height=450;
+		this.layer="mapnik";
 
 		// clear vector layer
 		this.vectors.removeFeatures(this.vectors.features);
@@ -48,6 +64,10 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			{
 				var parsed = parseFloat(words[1]);
 				if (!isNaN(parsed)) height=parsed;
+			}
+			else if (words[0]=="layer")
+			{
+				if (words[1] in layers) this.layer=words[1];
 			}
 			else if (words[0]=="symbols")
 			{
@@ -149,10 +169,14 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		this.map_element.style.display = "block";
 		this.map_element.style.width = width+"px";
 		this.map_element.style.height = height+"px";
+
+		var mapclass = layers[this.layer];
+		var map_layer = new mapclass("Map");
+		this.map.addLayer(map_layer);
 		
 		var lonLat = new OpenLayers.LonLat(longitude, latitude);
 		lonLat.transform(epsg4326, this.map.getProjectionObject());
-		this.map.setCenter(lonLat, zoom);	
+		this.map.setCenter(lonLat, zoom);
 	};
 
 	this.set_textfield_from_map = function()
@@ -167,6 +191,8 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		content += "zoom "+this.map.zoom+"\n";
 		content += "width "+parseInt(this.map_element.style.width)+"\n";
 		content += "height "+parseInt(this.map_element.style.height)+"\n";
+
+		content += "height "+this.layer+"\n";
 
 		content += "symbols";
 		for (symbol in this.symbols) content += " "+symbol;
@@ -252,7 +278,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 			var caption = document.createElement("caption");
 			caption.setAttribute("style", "font-weight:bold;");
-			caption.appendChild(document.createTextNode("States"));
+			caption.appendChild(document.createTextNode(wfMsg("states")));
 			table.appendChild(caption);
 
 			for (state in this.states)
@@ -269,7 +295,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				th.appendChild(img);
 
 				var td = document.createElement("td");
-				td.appendChild(document.createTextNode(this.states[state]));
+				td.appendChild(document.createTextNode(wfMsg(this.states[state])));
 				tr.appendChild(td);
 			}
 
@@ -281,7 +307,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 			var caption = document.createElement("caption");
 			caption.setAttribute("style", "font-weight:bold;");
-			caption.appendChild(document.createTextNode("Symbols"));
+			caption.appendChild(document.createTextNode(wfMsg("symbols")));
 			table.appendChild(caption);
 
 			for (symbol in this.symbols)
@@ -298,14 +324,14 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				th.appendChild(img);
 
 				var td = document.createElement("td");
-				td.appendChild(document.createTextNode(this.symbols[symbol]));
+				td.appendChild(document.createTextNode(wfMsg(this.symbols[symbol])));
 				tr.appendChild(td);
 			}
 
 			// make link for buttons div
 			legendlink = document.createElement("a");
 			legendlink.setAttribute("href","#"+legend_id);
-			legendlink.appendChild(document.createTextNode("Legend"));
+			legendlink.appendChild(document.createTextNode(wfMsg("legend")));
 
 			// callback for link
 			var toggle_visibility = function(element)
@@ -371,29 +397,29 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 	// CONSTRUCTOR
 
-	// predefined symbols and states
+	// predefined symbols and states, mapping to i18n messages
 	this.symbols = {
-		"Labelled":"street names",
-		"Car":"streets",
-		"Bike":"bike paths",
-		"Foot":"footpaths",
-		"Transport":"public transport",
-		"Public":"public buildings",
-		"Fuel":"fuel stations",
-		"Restaurant":"restaurants and hotels",
-		"Tourist":"sights",
-		"Nature":"natural areas as rivers, forest",
-		"Housenumbers":"housenumbers"
+		"Labelled":"symbol_labelled",
+		"Car":"symbol_car",
+		"Bike":"symbol_bike",
+		"Foot":"symbol_foot",
+		"Transport":"symbol_transport",
+		"Public":"symbol_public",
+		"Fuel":"symbol_fuel",
+		"Restaurant":"symbol_restaurant",
+		"Tourist":"symbol_tourist",
+		"Nature":"symbol_nature",
+		"Housenumbers":"symbol_housenumbers"
 	};
 
 	this.states = {
-		"":"unknown",
-		"0":"nothing",
-		"1":"partial",
-		"2":"nearly everything",
-		"3":"done",	
-		"4":"double-checked",
-		"X":"don't exist"
+		"":"state_unknown",
+		"0":"state_0",
+		"1":"state_1",
+		"2":"state_2",
+		"3":"state_3",	
+		"4":"state_4",
+		"X":"state_X"
 	};
 
 	// get html elements
@@ -431,9 +457,6 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 	});
 
 	// add layers
-	var mapniklayer = new OpenLayers.Layer.OSM.Mapnik("Mapnik");
-	this.map.addLayer(mapniklayer);
-
 	this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
 	this.map.addLayer(this.vectors);
 
@@ -451,7 +474,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			this.preloaded_images[symbol][state] = new Image();
 			this.preloaded_images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
 
-			var title = this.symbols[symbol]+": "+this.states[state];
+			var title = wfMsg(this.symbols[symbol])+": "+wfMsg(this.states[state]);
 			this.preloaded_images[symbol][state].setAttribute("alt", title);
 			this.preloaded_images[symbol][state].setAttribute("title", title);
 		}

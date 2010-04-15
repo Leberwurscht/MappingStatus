@@ -20,32 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Maximilian Hoegner <pbmaxi@hoegners.de>
- * @addtogroup Extensions 
+ * @addtogroup Extensions
  */
 
-if (!defined('MEDIAWIKI')) die('This file is a MediaWiki extension, it is not a valid entry point');
+require_once(dirname(__FILE__)."/MappingStatus.i18n.php");
 
-define('MEDIAWIKI_MAPPINGSTATUS_VERSION', '1');
+header('Content-Type: application/javascript; charset=UTF-8');
 
-$wgExtensionCredits['parserhook'][] = array(
-	'name'           => 'OpenStreetMap Mapping Status',
-	'author'         => 'Maximilian Hoegner',
-	'url'            => '',
-	'version'        => MEDIAWIKI_MAPPINGSTATUS_VERSION,
-	'descriptionmsg' => 'mappingstatus_desc',
-);
+echo "MappingStatusMapMessages = {\n";
 
-// viewing
-$wgExtensionFunctions[] = 'wfmappingstatus';
+$lang = $_REQUEST['lang'];
 
-$wgAutoloadClasses['MappingStatus'] = dirname(__FILE__).'/MappingStatus.class.php';
-$wgExtensionMessagesFiles['MappingStatus'] = dirname(__FILE__)."/MappingStatus.i18n.php";
+$dict=$messages['en'];
 
-function wfmappingstatus() {
-	global $wgParser;
-	$wgParser->setHook('mappingstatus', array('MappingStatus', 'parse'));
+if (array_key_exists($lang,$messages))	
+	foreach ($messages[$lang] as $key=>$value)
+		$dict[$key] = $value;
+
+foreach ($dict as $key=>$value)
+{
+	echo "\t'".addslashes(substr($key,14))."':'".addslashes($value)."',\n";
 }
 
-// editing
-$wgAutoloadClasses['MappingStatusEdit'] = dirname(__FILE__).'/MappingStatusEdit.class.php';
-$wgSpecialPages['MappingStatusEdit'] = 'MappingStatusEdit';
+echo "}";
+
+?>

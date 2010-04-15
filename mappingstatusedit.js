@@ -1,5 +1,8 @@
 MappingStatusMap.prototype.edit = function(statusedit_element)
 {
+	// I18N
+	wfMsg = this.translate_message;
+
 	// StatusEdit class
 	var StatusEdit = function(mappingstatusmap, statusedit_element)
 	{
@@ -14,7 +17,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 			this.label_element.value = feature.attributes.label;
 			this.article_element.value = feature.attributes.article;
 
-			for (symbol in feature.attributes.states)
+			for (symbol in mappingstatusmap.symbols)
 			{
 				// set image
 				if (this.headers[symbol].hasChildNodes())
@@ -60,7 +63,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 		// delete button
 		var button = document.createElement("input");
 		button.setAttribute("type", "button");
-		button.setAttribute("value", "delete polygon");
+		button.setAttribute("value", wfMsg("delete_polygon"));
 		button.setAttribute("style", "float:right;");
 		this.form.appendChild(button);
 
@@ -87,7 +90,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 
 		// header
 		var header = document.createElement("h3");
-		header.appendChild(document.createTextNode("Edit Polygon"));
+		header.appendChild(document.createTextNode(wfMsg("edit_polygon")));
 		this.form.appendChild(header);
 
 		// table for text entries
@@ -102,7 +105,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 		var td = document.createElement("td");
 		tr.appendChild(td);
 		var label = document.createElement("label");
-		label.appendChild(document.createTextNode("Label:"));
+		label.appendChild(document.createTextNode(wfMsg("label")));
 		td.appendChild(label);
 		var td = document.createElement("td");
 		tr.appendChild(td);
@@ -116,7 +119,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 		var td = document.createElement("td");
 		tr.appendChild(td);
 		var label = document.createElement("label");
-		label.appendChild(document.createTextNode("Article:"));
+		label.appendChild(document.createTextNode(wfMsg("article")));
 		td.appendChild(label);
 		var td = document.createElement("td");
 		tr.appendChild(td);
@@ -127,7 +130,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 		// -- status table --
 
 		var header = document.createElement("h4");
-		header.appendChild(document.createTextNode("Status"));
+		header.appendChild(document.createTextNode(wfMsg("status")));
 		this.form.appendChild(header);
 
 		var table = document.createElement("table");
@@ -160,7 +163,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 			th.style.textAlign="right";
 			tr.appendChild(th);
 
-			th.appendChild(document.createTextNode(this.mappingstatusmap.states[state]));
+			th.appendChild(document.createTextNode(wfMsg(this.mappingstatusmap.states[state])));
 
 			this.radioboxes[state]={};
 			// create radioboxes

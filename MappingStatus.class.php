@@ -1,57 +1,44 @@
 <?php
-# OpenStreetMap MappingStatus - MediaWiki extension
-#
-# This defines what happens when <mappingstatus> tag is placed in the wikitext
-#
-# We show a map based on the lat/lon/zoom data passed in. This extension brings in
-# the OpenLayers javascript, to show a slippy map.
-#
-# Usage example:
-# <mappingstatus lat="51.485" lon="-0.15" z="11" w="300" h="200" layer="osmarender" marker="0" />
-#
-# Tile images are not cached local to the wiki.
-# To acheive this (remove the OSM dependency) you might set up a squid proxy,
-# and modify the requests URLs here accordingly.
-#
-# This file should be placed in the mediawiki 'extensions' directory
-# ...and then it needs to be 'included' within LocalSettings.php
-#
-# #################################################################################
-#
-# Copyright 2008 Harry Wood, Jens Frank, Grant Slater, Raymond Spekking and others
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-# @addtogroup Extensions
-#
+/*
+ * MappingStatusMap is a Mediawiki extention that allows one to insert maps into
+ * a wiki page, mark areas and set flags for how well that area is mapped in
+ * Openstreetmap.
+ *
+ * Copyright 2010 Maximilian Hoegner <pbmaxi@hoegners.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Maximilian Hoegner <pbmaxi@hoegners.de>
+ * @addtogroup Extensions 
+ */
 
 class MappingStatus {
-	# The callback function for converting the input text to HTML output
 	static function parse( $input, $argv )
 	{
-		global $wgScriptPath, $wgHooks, $wgOut, $wgParser, $wgUser, $wgTitle;
+		global $wgScriptPath, $wgHooks, $wgParser, $wgUser, $wgLang;
+
+		wfLoadExtensionMessages('MappingStatus');
 
 		// Special characters in textarea don't work unless properly encoded.
 		// EditPage has a method to do this, that's why we need a EditPage
 		// instance here
-		$editor = new EditPage(new Article($wgTitle));
+		$editor = new EditPage(new Article($wgParser->getTitle()));
 		$status = $editor->safeUnicodeOutput($input);
 
 		if (!isset($argv["id"]))
 		{
-			return "<strong style='color:#f00;'>MAPPINGSTATUS ERROR: ID NOT SET</strong>";
+			return "<strong style='color:#f00;'>".htmlentities(wfMsg('mappingstatus_noid'))."</strong>";
 		}
 		else $id=(int)$argv["id"];
 
@@ -61,6 +48,7 @@ class MappingStatus {
 
 		$output = "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
+		$output .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
 		$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 //		$output .= "<script type='text/javascript'>\n";
 //		$output .= "\taddOnloadHook(function(){ new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id'); });\n";
@@ -83,7 +71,7 @@ class MappingStatus {
 			$editlink = htmlentities($editlink);
 
 			$editlink_id = "mappingstatusedit_$id";
-			$output .= "<a href='$editlink' id='$editlink_id'>Edit</a>";
+			$output .= "<a href='$editlink' id='$editlink_id'>".htmlentities(wfMsg('mappingstatus_edit'))."</a>";
 		}
 
 		$output .= "<script>new MappingStatusMap('$jsroot','mappingstatusmap_$id','mappingstatusdata_$id').add_legend('$editlink_id');</script>\n";

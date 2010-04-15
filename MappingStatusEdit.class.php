@@ -7,20 +7,32 @@ class MappingStatusEdit extends SpecialPage {
 	}
  
 	function execute( $par ) {
-		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath, $wgUser;
- 
+		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath, $wgUser, $wgLang;
+
 		$this->setHeaders();
 
-		$wgOut->setPagetitle("Edit mapping status");
+		$wgOut->setPagetitle(wfMsg('mappingstatus_edittitle'));
  
 		$action = $wgRequest->getText("action");
 
+//		$exploded = explode("/",$par,2);
+//		$wgOut->addHTML("<pre>".var_export(explode("/",$par,2),true)."</pre>");
 		$id = $wgRequest->getInt("mappingstatusmapid");
+/*		if (count($exploded)<2)
+		{
+			$wgOut->addWikiText("Map id and article name is required for editing a MappingStatus map!");
+			return;
+		}
+
+		list($id,$par) = $exploded;
+		$id = (int)$id;
+	
+		$wgOut->addHTML("<pre>".var_export(array($a,$b),true)."</pre>");	*/
 
 		$title = Title::newFromText($par);
 		if ($title==null)
 		{
-			$wgOut->addWikiText("No article given.");
+			$wgOut->addWikiText(wfMsg('mappingstatus_noarticle'));
 			return;
 		}
 
@@ -28,9 +40,11 @@ class MappingStatusEdit extends SpecialPage {
 
 		$editor = new EditPage($article);
 
+		$submit = "";
+
 		if ($action=="save")
 		{
-			$editor->summary = "updated mappingstatus of map with $id";
+			$editor->summary = wfMsg('mappingstatus_summary',$id);
 			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
 
 			$detail=false;
@@ -48,7 +62,11 @@ class MappingStatusEdit extends SpecialPage {
 
 			if ($permErrors)
 			{
-				$wgOut->addHTML("<strong style='color:#f00;'>You don't have the permission to edit this map.</strong>");
+				$wgOut->addHTML("<strong style='color:#f00;'>".htmlentities(wfMsg('mappingstatus_permerror'))."</strong>");
+			}
+			else
+			{
+				$submit = "<input type='submit' value='".htmlentities(wfMsg('mappingstatus_save'))."'/>\n";
 			}
 		}
 
@@ -63,6 +81,7 @@ class MappingStatusEdit extends SpecialPage {
 
 		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
+		$form .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";
 /*		$form .= "<script type='text/javascript'>\n";
@@ -76,7 +95,8 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
-		$form .= "<input type='submit' value='Save'/>\n";
+		$form .= $submit;
+//		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
 
 		$form .= "<script type='text/javascript'>\n";
