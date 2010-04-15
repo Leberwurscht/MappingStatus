@@ -256,4 +256,5 @@ MappingStatusMap.prototype.onsubmit = function()
 {
 	this.statusedit.hide();
 	this.set_textfield_from_map();
+	return true;
 }

@@ -41,9 +41,13 @@ class MappingStatus {
 	# The callback function for converting the input text to HTML output
 	static function parse( $input, $argv )
 	{
-		global $wgScriptPath, $wgHooks, $wgOut, $wgParser, $wgUser;
+		global $wgScriptPath, $wgHooks, $wgOut, $wgParser, $wgUser, $wgTitle;
 
-		$status = htmlentities($input);
+		// Special characters in textarea don't work unless properly encoded.
+		// EditPage has a method to do this, that's why we need a EditPage
+		// instance here
+		$editor = new EditPage(new Article($wgTitle));
+		$status = $editor->safeUnicodeOutput($input);
 
 		if (!isset($argv["id"]))
 		{

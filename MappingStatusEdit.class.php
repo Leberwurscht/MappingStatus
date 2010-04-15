@@ -26,9 +26,10 @@ class MappingStatusEdit extends SpecialPage {
 
 		$article  = new Article($title);
 
+		$editor = new EditPage($article);
+
 		if ($action=="save")
 		{
-			$editor = new EditPage($article);
 			$editor->summary = "updated mappingstatus of map with $id";
 			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
 
@@ -56,6 +57,7 @@ class MappingStatusEdit extends SpecialPage {
 		$jsroot = addslashes($root);
 
 		$status=$this->getMappingStatus($article,$id);
+		$status = $editor->safeUnicodeOutput($status);
 		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&mappingstatusmapid=$id";
 		$url = htmlentities($url);
 
@@ -85,7 +87,8 @@ class MappingStatusEdit extends SpecialPage {
 		$content = $article->getContent();
 		$matches=array();
 		preg_match("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is",$content,&$matches);
-		return htmlentities($matches[1]);
+		return $matches[1];
+		//return htmlentities($matches[1]);
 	}
 
 	function setMappingStatus($article,$status,$id)

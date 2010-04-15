@@ -49,6 +49,19 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				var parsed = parseFloat(words[1]);
 				if (!isNaN(parsed)) height=parsed;
 			}
+			else if (words[0]=="symbols")
+			{
+				all_symbols = this.symbols;
+				this.symbols = {};
+
+				for (var j=1; j<words.length; j++)
+				{
+					symbol = words[j];
+					if (!all_symbols[symbol]) continue;
+
+					this.symbols[symbol] = all_symbols[symbol];
+				}
+			}
 			else if (words[0]=="polygon")
 			{
 				// get label and article name
@@ -154,6 +167,10 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		content += "zoom "+this.map.zoom+"\n";
 		content += "width "+parseInt(this.map_element.style.width)+"\n";
 		content += "height "+parseInt(this.map_element.style.height)+"\n";
+
+		content += "symbols";
+		for (symbol in this.symbols) content += " "+symbol;
+		content += "\n";
 
 		for (var i=0; i<this.vectors.features.length; i++)
 		{
