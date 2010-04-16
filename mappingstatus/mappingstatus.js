@@ -1,3 +1,25 @@
+/*
+ * MappingStatusMap is a Mediawiki extention that allows one to insert maps into
+ * a wiki page, mark areas and set flags for how well that area is mapped in
+ * Openstreetmap.
+ *
+ * Copyright 2010 Maximilian Hoegner <pbmaxi@hoegners.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 {
 	// I18N
@@ -197,8 +219,9 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 		}
 
-		// make map visible, set size
-		this.map_element.style.display = "block";
+		if (!this.layer) this.set_layer();
+
+		// set size
 		this.map_element.style.width = width+"px";
 		this.map_element.style.height = height+"px";
 
@@ -224,7 +247,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		content += "layer "+this.layer+"\n";
 
 		content += "symbols";
-		for (symbol in this.symbols) content += " "+symbol;
+		for (var symbol in this.symbols) content += " "+symbol;
 		content += "\n";
 
 		for (var i=0; i<this.vectors.features.length; i++)
@@ -278,7 +301,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		var legendlink;
 
 		var sample;
-		for (symbol in this.symbols)
+		for (var symbol in this.symbols)
 		{
 			sample=symbol;
 			break;
@@ -310,7 +333,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			caption.appendChild(document.createTextNode(wfMsg("states")));
 			table.appendChild(caption);
 
-			for (state in this.states)
+			for (var state in this.states)
 			{
 				var tr = document.createElement("tr");
 				table.appendChild(tr);
@@ -339,7 +362,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			caption.appendChild(document.createTextNode(wfMsg("symbols")));
 			table.appendChild(caption);
 
-			for (symbol in this.symbols)
+			for (var symbol in this.symbols)
 			{
 				var tr = document.createElement("tr");
 				table.appendChild(tr);
@@ -490,11 +513,11 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 	// preload images
 	this.preloaded_images = {};
-	for (symbol in this.symbols)
+	for (var symbol in this.symbols)
 	{
 		this.preloaded_images[symbol]={};
 
-		for (state in this.states)
+		for (var state in this.states)
 		{
 			this.preloaded_images[symbol][state] = new Image();
 			this.preloaded_images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
@@ -533,7 +556,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				while (this.label_element.hasChildNodes())
 					this.label_element.removeChild(this.label_element.firstChild);
 
-				for (symbol in this.mappingstatusmap.symbols)
+				for (var symbol in this.mappingstatusmap.symbols)
 				{
 					state = feature.attributes.states[symbol];
 					this.status_element.appendChild(this.mappingstatusmap.preloaded_images[symbol][state]);

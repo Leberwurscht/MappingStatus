@@ -43,6 +43,8 @@ class MappingStatusView {
 		}
 		else $id=(int)$argv["id"];
 
+		$output = '';
+
 		$root = "$wgScriptPath/extensions/mappingstatus";
 		$htmlroot = htmlentities($root);
 		$jsroot = addslashes($root);

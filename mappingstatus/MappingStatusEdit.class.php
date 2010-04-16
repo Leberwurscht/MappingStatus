@@ -57,9 +57,10 @@ class MappingStatusEdit extends SpecialPage {
 		{
 			$editor->summary = wfMsg('mappingstatus_summary', $id);
 			$editor->textbox1 = $this->setMappingStatus($article, $wgRequest->getText("textbox1"), $id);
+			$editor->edittime = $editor->mArticle->getTimestamp();
 
 			$detail=false;
-			$r=$editor->attemptSave(&$detail);
+			$r=$editor->attemptSave($detail,false);
 		}
 		else
 		{
@@ -85,19 +86,13 @@ class MappingStatusEdit extends SpecialPage {
 		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&mappingstatusmapid=$id";
 		$url = htmlentities($url);
 
-/*		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
-		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
-		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
-		$form .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
-		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";*/
-
 		$wgOut->addScript("<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n");
 		$wgOut->addScript("<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n");
 		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n");
 		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n");
 		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n");
 
-		$form .= "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
+		$form = "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
 		$form .= "<div style='display:block; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
@@ -115,16 +110,15 @@ class MappingStatusEdit extends SpecialPage {
 	{
 		$content = $article->getContent();
 		$matches=array();
-		preg_match("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is",$content,&$matches);
+		preg_match("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is",$content,$matches);
 		return $matches[1];
-		//return htmlentities($matches[1]);
 	}
 
 	function setMappingStatus($article,$status,$id)
 	{
 		$content = $article->getContent();
 		$count=0;
-		$replaced=preg_replace("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is","<mappingstatus id=\"$id\">$status</mappingstatus>",$content,1,&$count);
+		$replaced=preg_replace("/\<mappingstatus id=\"$id\"\>(.*?)\<\/mappingstatus\>/is","<mappingstatus id=\"$id\">$status</mappingstatus>",$content,1,$count);
 
 		if ($count==0)
 		{

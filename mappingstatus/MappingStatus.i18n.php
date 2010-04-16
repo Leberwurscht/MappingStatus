@@ -105,13 +105,42 @@ $messages['de'] = array(
 );
 
 // @author Merritt
+// @author Maximilian Hoegner <pbmaxi@hoegners.de>
 $messages['fr'] = array(
 	'mappingstatus_desc' => 'Ajoute un nouveau tag, par lequel des cartes peuvent être intégrés dans les sites du wiki. On peux marquer des régions et déterminer comment bien ils sont réprésentés dans Openstreetmap.',
-	'mappingstatus_noid' => 'FAUTE DANS MAPPINGSTATUS: la ID manque.',
-	'mappingstatus_edit' => 'modifier', 
+	'mappingstatus_noid' => 'CAS D\'ERREUR DANS MAPPINGSTATUS: la ID manque.',
+	'mappingstatus_edit' => 'adapter', 
 	'mappingstatus_edittitle' => 'modifier des régions du carte',
 	'mappingstatus_noarticle' => 'Pas d\'article à modifier.',
 	'mappingstatus_summary' => 'carte $1 actualisé',
 	'mappingstatus_permerror' => 'pas de persmission à modifier cette carte',
-	'mappingstatus_save' => 'sauvegarder'
+	'mappingstatus_save' => 'sauvegarder',
+	'mappingstatus_states' => 'couleurs',
+	'mappingstatus_symbols' => 'Symboles',
+	'mappingstatus_state_unknown' => 'inconnu',
+	'mappingstatus_state_0' => 'néant',
+	'mappingstatus_state_1' => 'partiel',
+	'mappingstatus_state_2' => 'presque complet',
+	'mappingstatus_state_3' => 'complet',
+	'mappingstatus_state_4' => 'contrôlé deux fois',
+	'mappingstatus_state_X' => 'n\'existe pas',
+	'mappingstatus_symbol_labelled' => 'Noms de rues',
+	'mappingstatus_symbol_car' => 'Rues',
+	'mappingstatus_symbol_bike' => 'Pistes cyclables',
+	'mappingstatus_symbol_foot' => 'Chemins',
+	'mappingstatus_symbol_transport' => 'Transport en commun',
+	'mappingstatus_symbol_public' => 'Edifices publics',
+	'mappingstatus_symbol_fuel' => 'Stations de service',
+	'mappingstatus_symbol_restaurant' => 'Restaurants et hôtels',
+	'mappingstatus_symbol_tourist' => 'Monuments',
+	'mappingstatus_symbol_nature' => 'Domaines naturels comme des fôrests et des lacs',
+	'mappingstatus_symbol_housenumbers' => 'Numéros',
+	'mappingstatus_legend' => 'Légende',
+	'mappingstatus_delete_polygon' => 'Eliminer polygone',
+	'mappingstatus_edit_polygon' => 'Adapter polygone',
+	'mappingstatus_label' => 'Titre: ',
+	'mappingstatus_article' => 'Article: ',
+	'mappingstatus_status' => 'Etat',
+	'mappingstatus_layer_error' => 'Cas d\'erreur dans MappingStatus: Le mot-clé \'layer\' doit apparaître devant des définitions des polygones!',
+	'mappingstatus_edit_script_error' => 'Doit intégrer mappingstatusedit.js pour adapter des cartes!'
 );

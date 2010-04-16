@@ -1,0 +1,3 @@
+* copy 'mappingstatus' folder into 'extensions' folder
+* add 'require_once("extensions/mappingstatus/MappingStatus.php");' to
+  LocalSettings.php

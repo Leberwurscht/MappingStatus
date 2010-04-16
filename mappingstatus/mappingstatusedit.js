@@ -1,3 +1,25 @@
+/*
+ * MappingStatusMap is a Mediawiki extention that allows one to insert maps into
+ * a wiki page, mark areas and set flags for how well that area is mapped in
+ * Openstreetmap.
+ *
+ * Copyright 2010 Maximilian Hoegner <pbmaxi@hoegners.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 MappingStatusMap.prototype.edit = function(statusedit_element)
 {
 	// I18N
@@ -17,7 +39,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 			this.label_element.value = feature.attributes.label;
 			this.article_element.value = feature.attributes.article;
 
-			for (symbol in mappingstatusmap.symbols)
+			for (var symbol in mappingstatusmap.symbols)
 			{
 				// set image
 				if (this.headers[symbol].hasChildNodes())
@@ -145,16 +167,18 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 		tr.appendChild(td);
 
 		this.headers = {}
-		for (symbol in this.mappingstatusmap.symbols)
+		for (var symbol in this.mappingstatusmap.symbols)
 		{
 			this.headers[symbol]=document.createElement("th");
 			tr.appendChild(this.headers[symbol]);
 		}
 
+		// declare symbol here to know whether this.symbols is empty afterwards
+		var symbol;
+
 		// radioboxes, one row per state
 		this.radioboxes={};
-
-		for (state in this.mappingstatusmap.states)
+		for (var state in this.mappingstatusmap.states)
 		{
 			var tr = document.createElement("tr");
 			table.appendChild(tr);
@@ -200,6 +224,13 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 				var callback = new radio_onchange(this, symbol, state);
 				this.radioboxes[state][symbol].onchange = callback.run;
 			}
+		}
+
+		if (!symbol)
+		{
+			// no symbols, so hide status editing table
+			header.style.display = "none";
+			table.style.display = "none";
 		}
 
 		this.hide();
