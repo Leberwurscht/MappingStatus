@@ -1,6 +1,5 @@
-
-test in other browsers
-
+DONE test in IE8, Opera 10.10, Firefox 3.5.9, Midori 0.1.9 (libwebkit-1.0-2)
+DONE insert scripts with wgOut->addScripts where possible (not in view component because of caching issues)
 DONE prevent multiple including of scripts
 DONE Osmarender
 DONE legend
