@@ -36,14 +36,13 @@ $wgExtensionCredits['parserhook'][] = array(
 );
 
 // viewing
-$wgExtensionFunctions[] = 'wfmappingstatus';
-
-$wgAutoloadClasses['MappingStatus'] = dirname(__FILE__).'/MappingStatus.class.php';
+$wgAutoloadClasses['MappingStatusView'] = dirname(__FILE__).'/MappingStatusView.class.php';
 $wgExtensionMessagesFiles['MappingStatus'] = dirname(__FILE__)."/MappingStatus.i18n.php";
 
+$wgExtensionFunctions[] = 'wfmappingstatus';
 function wfmappingstatus() {
 	global $wgParser;
-	$wgParser->setHook('mappingstatus', array('MappingStatus', 'parse'));
+	$wgParser->setHook('mappingstatus', array('MappingStatusView', 'parse'));
 }
 
 // editing

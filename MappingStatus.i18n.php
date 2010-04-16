@@ -60,7 +60,8 @@ $messages['en'] = array(
 	'mappingstatus_label' => 'Label: ',
 	'mappingstatus_article' => 'Article: ',
 	'mappingstatus_status' => 'status',
-	'mappingstatus_layer_error' => 'MappingStatus Error: \'layer\' keyword must show up before any polygons!'
+	'mappingstatus_layer_error' => 'MappingStatus Error: \'layer\' keyword must show up before any polygons!',
+	'mappingstatus_edit_script_error' => 'You must load mappingstatusedit.js in order to be able to edit a map!'
 );
 
 // @author Maximilian Hoegner <pbmaxi@hoegners.de>
@@ -99,7 +100,8 @@ $messages['de'] = array(
 	'mappingstatus_label' => 'Titel: ',
 	'mappingstatus_article' => 'Artikel: ',
 	'mappingstatus_status' => 'Status',
-	'mappingstatus_layer_error' => 'Fehler in MappingStatus: Das Schlüsselwort \'layer\' muss vor allen Polygon-Definitionen kommen!'
+	'mappingstatus_layer_error' => 'Fehler in MappingStatus: Das Schlüsselwort \'layer\' muss vor allen Polygon-Definitionen kommen!',
+	'mappingstatus_edit_script_error' => 'Das Script mappingstatusedit.js muss eingebunden werden, um eine Karte zu bearbeiten!'
 );
 
 // @author Merritt

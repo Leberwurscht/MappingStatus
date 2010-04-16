@@ -16,7 +16,6 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 	var layers = {
 		"mapnik":OpenLayers.Layer.OSM.Mapnik,
 		"osmarender":OpenLayers.Layer.OSM.Osmarender,
-		"maplint":OpenLayers.Layer.OSM.Maplint,
 		"cyclemap":OpenLayers.Layer.OSM.CycleMap
 	};
 
@@ -89,7 +88,13 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				if (words[1] in layers)
 				{
 					var success = this.set_layer(words[1]);
-					if (!success) alert(wfMsg("layer_error"));
+					if (!success)
+					{
+						var error = document.createElement("strong");
+						error.appendChild(document.createTextNode(wfMsg("layer_error")));
+						error.style.color = "#f00";
+						this.map_element.parentNode.insertBefore(error, this.map_element);
+					}
 				}
 			}
 			else if (words[0]=="symbols")
@@ -501,10 +506,18 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 	if (statusedit_id) // editing
 	{
-		if (!this.edit) alert("You must load mappingstatusedit.js in order to be able to edit a map!");
-
-		statusedit_element = document.getElementById(statusedit_id);
-		this.edit(statusedit_element);
+		if (!this.edit)
+		{
+			var error = document.createElement("strong");
+			error.appendChild(document.createTextNode(wfMsg("edit_script_error")));
+			error.style.color = "#f00";
+			this.map_element.parentNode.insertBefore(error, this.map_element);
+		}
+		else
+		{
+			statusedit_element = document.getElementById(statusedit_id);
+			this.edit(statusedit_element);
+		}
 	}
 	else // viewing
 	{

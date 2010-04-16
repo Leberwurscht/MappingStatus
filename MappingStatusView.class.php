@@ -23,10 +23,11 @@
  * @addtogroup Extensions 
  */
 
-class MappingStatus {
+class MappingStatusView {
 	static function parse( $input, $argv )
 	{
-		global $wgScriptPath, $wgHooks, $wgParser, $wgUser, $wgLang;
+		global $wgScriptPath, $wgHooks, $wgParser, $wgUser, $wgLang, $wgOut;
+		global $egOpenlayersScriptLoaded, $egOpenstreetmapScriptLoaded, $egMappingStatusScriptsLoaded;
 
 		wfLoadExtensionMessages('MappingStatus');
 
@@ -46,10 +47,24 @@ class MappingStatus {
 		$htmlroot = htmlentities($root);
 		$jsroot = addslashes($root);
 
-		$output = "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
-		$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
-		$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
-		$output .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
+		if (!$egOpenlayersScriptLoaded)
+		{
+			$output .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
+			$egOpenlayersScriptLoaded = true;
+		}
+
+		if (!$egOpenstreetmapScriptLoaded)
+		{
+			$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
+			$egOpenstreetmapScriptLoaded = true;
+		}
+
+		if (!$egMappingStatusScriptsLoaded)
+		{
+			$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
+			$output .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
+			$egMappingStatusScriptsLoaded = true;
+		}
 
 		$output .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap_$id'></div>\n";
 		$output .= "<textarea rows='10' cols='80' readonly='readonly' id='mappingstatusdata_$id'>$status</textarea>\n";
@@ -69,7 +84,7 @@ class MappingStatus {
 
 		$marker = "xx-mappingstatus-marker-$id-xx";
 
-		$wgHooks['ParserAfterTidy'][] = array("MappingStatus::afterTidy",array($marker,$output));
+		$wgHooks['ParserAfterTidy'][] = array("MappingStatusView::afterTidy",array($marker,$output));
 
 		return "<div>$marker</div>";
 	}

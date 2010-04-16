@@ -211,6 +211,9 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 	var on_select = function(ev)
 	{
 		this.statusedit.show_feature(ev.feature);
+
+		// jump to anchor
+		window.location.hash = this.statusedit.formname;
 	};
 
 	var on_unselect = function(ev)

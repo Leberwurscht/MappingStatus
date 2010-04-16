@@ -1,7 +1,7 @@
 
 test in other browsers
-clean insertion of scripts (wgOut->addScript), prevent multiple including of scripts
 
+DONE prevent multiple including of scripts
 DONE Osmarender
 DONE legend
 DONE allow to choose symbols
