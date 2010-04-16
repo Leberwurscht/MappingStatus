@@ -48,6 +48,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 		// set up vector layer
 		this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
+
 		this.map.addLayer(this.vectors);
 
 		// parse textfield content
@@ -55,7 +56,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 		for (var i=0;i<lines.length;i++)
 		{
-			var line = lines[i];
+			var line = lines[i].replace(/^\s+/, "").replace(/\s+$/, "");
 			var words = line.split(" ");
 
 			if (words[0]=="latitude")
@@ -317,7 +318,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				var th = document.createElement("th");
 				tr.appendChild(th);
 
-				var img = Image();
+				var img = new Image();
 				img.src = this.preloaded_images[sample][state].src;
 				img.setAttribute("alt",state);
 				th.appendChild(img);
@@ -346,7 +347,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				var th = document.createElement("th");
 				tr.appendChild(th);
 
-				var img = Image();
+				var img = new Image();
 				img.src = this.preloaded_images[symbol][""].src;
 				img.setAttribute("alt",symbol);
 				th.appendChild(img);

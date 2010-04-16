@@ -92,7 +92,7 @@ class MappingStatusEdit extends SpecialPage {
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";
 
 		$form .= "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
-		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
+		$form .= "<div style='display:block; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
 		$form .= $submit;
