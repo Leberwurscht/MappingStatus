@@ -59,7 +59,8 @@ $messages['en'] = array(
 	'mappingstatus_edit_polygon' => 'Edit Polygon',
 	'mappingstatus_label' => 'Label: ',
 	'mappingstatus_article' => 'Article: ',
-	'mappingstatus_status' => 'status'
+	'mappingstatus_status' => 'status',
+	'mappingstatus_layer_error' => 'MappingStatus Error: \'layer\' keyword must show up before any polygons!'
 );
 
 // @author Maximilian Hoegner <pbmaxi@hoegners.de>
@@ -97,7 +98,8 @@ $messages['de'] = array(
 	'mappingstatus_edit_polygon' => 'Polygon bearbeiten',
 	'mappingstatus_label' => 'Titel: ',
 	'mappingstatus_article' => 'Artikel: ',
-	'mappingstatus_status' => 'Status'
+	'mappingstatus_status' => 'Status',
+	'mappingstatus_layer_error' => 'Fehler in MappingStatus: Das Schlüsselwort \'layer\' muss vor allen Polygon-Definitionen kommen!'
 );
 
 // @author Merritt

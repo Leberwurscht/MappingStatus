@@ -1,4 +1,27 @@
 <?php
+/*
+ * MappingStatusMap is a Mediawiki extention that allows one to insert maps into
+ * a wiki page, mark areas and set flags for how well that area is mapped in
+ * Openstreetmap.
+ *
+ * Copyright 2010 Maximilian Hoegner <pbmaxi@hoegners.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Maximilian Hoegner <pbmaxi@hoegners.de>
+ * @addtogroup Extensions 
+ */
 
 class MappingStatusEdit extends SpecialPage {
 	function __construct() {
@@ -15,19 +38,7 @@ class MappingStatusEdit extends SpecialPage {
  
 		$action = $wgRequest->getText("action");
 
-//		$exploded = explode("/",$par,2);
-//		$wgOut->addHTML("<pre>".var_export(explode("/",$par,2),true)."</pre>");
 		$id = $wgRequest->getInt("mappingstatusmapid");
-/*		if (count($exploded)<2)
-		{
-			$wgOut->addWikiText("Map id and article name is required for editing a MappingStatus map!");
-			return;
-		}
-
-		list($id,$par) = $exploded;
-		$id = (int)$id;
-	
-		$wgOut->addHTML("<pre>".var_export(array($a,$b),true)."</pre>");	*/
 
 		$title = Title::newFromText($par);
 		if ($title==null)
@@ -44,30 +55,25 @@ class MappingStatusEdit extends SpecialPage {
 
 		if ($action=="save")
 		{
-			$editor->summary = wfMsg('mappingstatus_summary',$id);
-			$editor->textbox1 = $this->setMappingStatus($article,$wgRequest->getText("textbox1"),$id);
+			$editor->summary = wfMsg('mappingstatus_summary', $id);
+			$editor->textbox1 = $this->setMappingStatus($article, $wgRequest->getText("textbox1"), $id);
 
 			$detail=false;
 			$r=$editor->attemptSave(&$detail);
 		}
 		else
 		{
-			$permErrors = $article->getTitle()->getUserPermissionsErrors( 'edit', $wgUser );
+			$title = $article->getTitle();
+			$permErrors = $title->getUserPermissionsErrors('edit', $wgUser);
 
-			# Can this title be created?
-			if ( !$article->getTitle()->exists() ) {
-				$permErrors = array_merge( $permErrors,
-					wfArrayDiff2( $article->getTitle()->getUserPermissionsErrors( 'create', $wgUser ), $permErrors ) );
-			}
+			// test whether article can be created
+			if (!$title->exists())
+				$permErrors = array_merge($permErrors, wfArrayDiff2($title->getUserPermissionsErrors('create', $wgUser), $permErrors));
 
 			if ($permErrors)
-			{
 				$wgOut->addHTML("<strong style='color:#f00;'>".htmlentities(wfMsg('mappingstatus_permerror'))."</strong>");
-			}
 			else
-			{
 				$submit = "<input type='submit' value='".htmlentities(wfMsg('mappingstatus_save'))."'/>\n";
-			}
 		}
 
 		$root = "$wgScriptPath/extensions/mappingstatus";
@@ -81,22 +87,15 @@ class MappingStatusEdit extends SpecialPage {
 
 		$form .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 		$form .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
-		$form .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
+		$form .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
 		$form .= "<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n";
-/*		$form .= "<script type='text/javascript'>\n";
-		$form .= "\tvar mappingstatusmap;\n";
-		$form .= "\taddOnloadHook(function(){\n";
-		$form .= "\t\tmappingstatusmap=new MappingStatusMap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusedit');\n";
-		$form .= "\t});\n";
-		$form .= "</script>\n";*/
 
 		$form .= "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
 		$form .= "<div style='display:none; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
 		$form .= $submit;
-//		$form .= "<input type='submit' value='Save'/>\n";
 		$form .= "</form>\n";
 
 		$form .= "<script type='text/javascript'>\n";

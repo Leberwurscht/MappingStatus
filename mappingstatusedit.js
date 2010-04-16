@@ -1,7 +1,7 @@
 MappingStatusMap.prototype.edit = function(statusedit_element)
 {
 	// I18N
-	wfMsg = this.translate_message;
+	var wfMsg = this.translate_message;
 
 	// StatusEdit class
 	var StatusEdit = function(mappingstatusmap, statusedit_element)

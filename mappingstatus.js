@@ -1,13 +1,15 @@
 function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 {
 	// I18N
-	this.translate_message = function(msg)
+	if (!this.translate_message)
 	{
-		if (MappingStatusMapMessages[msg]) return MappingStatusMapMessages[msg];
-		else return msg;
+		this.translate_message = function (message)
+		{
+			return message;
+		};
 	}
 
-	wfMsg = this.translate_message;
+	var wfMsg = this.translate_message;
 
 	// DEFINITIONS
 	var epsg4326 = new OpenLayers.Projection("EPSG:4326");
@@ -19,6 +21,19 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 	};
 
 	// METHODS
+	this.set_layer = function(layer)
+	{
+		if (this.layer)	return false;
+
+		if (!layers[layer]) layer="mapnik";
+		this.layer = layer;
+
+		var mapclass = layers[this.layer];
+		var map_layer = new mapclass("Map");
+		this.map.addLayer(map_layer);
+		return true;
+	}
+
 	this.set_map_from_textfield = function()
 	{
 		// default values
@@ -27,10 +42,14 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		zoom=5;
 		width=450;
 		height=450;
-		this.layer="mapnik";
 
-		// clear vector layer
-		this.vectors.removeFeatures(this.vectors.features);
+		// clean layers
+		while (this.map.layers.length) this.map.removeLayer(this.map.layers[0]);
+		this.layer = null;
+
+		// set up vector layer
+		this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
+		this.map.addLayer(this.vectors);
 
 		// parse textfield content
 		var lines=this.textfield_element.value.split("\n");
@@ -67,7 +86,11 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 			else if (words[0]=="layer")
 			{
-				if (words[1] in layers) this.layer=words[1];
+				if (words[1] in layers)
+				{
+					var success = this.set_layer(words[1]);
+					if (!success) alert(wfMsg("layer_error"));
+				}
 			}
 			else if (words[0]=="symbols")
 			{
@@ -84,6 +107,8 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 			else if (words[0]=="polygon")
 			{
+				if (!this.layer) this.set_layer();
+
 				// get label and article name
 				var label="";
 				var article="";
@@ -166,14 +191,12 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 		}
 
+		// make map visible, set size
 		this.map_element.style.display = "block";
 		this.map_element.style.width = width+"px";
 		this.map_element.style.height = height+"px";
 
-		var mapclass = layers[this.layer];
-		var map_layer = new mapclass("Map");
-		this.map.addLayer(map_layer);
-		
+		// set center and zoom
 		var lonLat = new OpenLayers.LonLat(longitude, latitude);
 		lonLat.transform(epsg4326, this.map.getProjectionObject());
 		this.map.setCenter(lonLat, zoom);
@@ -192,7 +215,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		content += "width "+parseInt(this.map_element.style.width)+"\n";
 		content += "height "+parseInt(this.map_element.style.height)+"\n";
 
-		content += "height "+this.layer+"\n";
+		content += "layer "+this.layer+"\n";
 
 		content += "symbols";
 		for (symbol in this.symbols) content += " "+symbol;
@@ -456,10 +479,6 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		projection: "EPSG:900913"
 	});
 
-	// add layers
-	this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
-	this.map.addLayer(this.vectors);
-
 	// read textfield
 	this.set_map_from_textfield();
 
@@ -636,12 +655,4 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		// create StatusInfo object
 		this.statusinfo = new StatusInfo(this, status_element, label_element);
 	}
-}
-
-MappingStatusMap.toggle_visibility = function(element_id)
-{
-	var element = document.getElementById(element_id);
-
-	if (element.style.display=="none") element.style.display = "block";
-	else element.style.display = "none";
 }

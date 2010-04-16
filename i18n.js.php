@@ -27,7 +27,7 @@ require_once(dirname(__FILE__)."/MappingStatus.i18n.php");
 
 header('Content-Type: application/javascript; charset=UTF-8');
 
-echo "MappingStatusMapMessages = {\n";
+echo "MappingStatusMap.prototype.messages = {\n";
 
 $lang = $_REQUEST['lang'];
 
@@ -42,6 +42,12 @@ foreach ($dict as $key=>$value)
 	echo "\t'".addslashes(substr($key,14))."':'".addslashes($value)."',\n";
 }
 
-echo "}";
+echo "};\n";
 
 ?>
+
+MappingStatusMap.prototype.translate_message = function(msg)
+{
+	if (MappingStatusMap.prototype.messages[msg]) return MappingStatusMap.prototype.messages[msg];
+	else return msg;
+};
