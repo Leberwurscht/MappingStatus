@@ -30,7 +30,7 @@ define('MEDIAWIKI_MAPPINGSTATUS_VERSION', '1');
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'OpenStreetMap Mapping Status',
 	'author'         => 'Maximilian Hoegner',
-	'url'            => '',
+	'url'            => 'http://www.hoegners.de/Maxi/mappingstatus/',
 	'version'        => MEDIAWIKI_MAPPINGSTATUS_VERSION,
 	'descriptionmsg' => 'mappingstatus_desc',
 );

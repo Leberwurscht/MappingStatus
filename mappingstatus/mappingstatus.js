@@ -461,7 +461,8 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		"Restaurant":"symbol_restaurant",
 		"Tourist":"symbol_tourist",
 		"Nature":"symbol_nature",
-		"Housenumbers":"symbol_housenumbers"
+		"Housenumbers":"symbol_housenumbers",
+		"Wheelchair":"symbol_wheelchair"
 	};
 
 	this.states = {
