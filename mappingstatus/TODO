@@ -1,8 +1,10 @@
 
-wgscriptmimetype
-mark header when jumping to hash
-defer polygon lines
-customsymbols keyword
-for hash links: unselect
+Retry in many browsers
 
+DONE enable custom symbols
+DONE for hash links: unselect
+WON'T DO mark header when jumping to hash
+DONE defer polygon lines
+DONE conflict handling
+DONE wgscriptmimetype
 DONE Email to Firefishy

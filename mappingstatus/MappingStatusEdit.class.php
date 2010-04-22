@@ -30,7 +30,7 @@ class MappingStatusEdit extends SpecialPage {
 	}
  
 	function execute( $par ) {
-		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath, $wgUser, $wgLang;
+		global $wgRequest, $wgOut, $wgTitle, $wgScriptPath, $wgUser, $wgLang, $wgJsMimeType;
 
 		$this->setHeaders();
 
@@ -55,12 +55,30 @@ class MappingStatusEdit extends SpecialPage {
 
 		if ($action=="save")
 		{
+			// set editing summary and the new article text
 			$editor->summary = wfMsg('mappingstatus_summary', $id);
 			$editor->textbox1 = $this->setMappingStatus($article, $wgRequest->getText("textbox1"), $id);
-			$editor->edittime = $editor->mArticle->getTimestamp();
 
-			$detail=false;
-			$r=$editor->attemptSave($detail,false);
+			// set up some variables needed for attemptSave
+			$editor->save = true;
+
+			$editor->starttime = $wgRequest->getVal("wpStarttime");
+			if ( !preg_match( '/^\d{14}$/', $editor->starttime ))
+				$editor->starttime = null;
+
+			$editor->edittime = $wgRequest->getVal("wpEdittime");
+			if ( !preg_match( '/^\d{14}$/', $editor->edittime ))
+				$editor->edittime = null;
+
+			// save page with access control and stuff
+			// will redirect to edited page if successful
+			$editor->attemptSave();
+
+			// error messages if saving was not successful
+			if ($editor->isConflict)
+				$wgOut->addHTML("<strong style='color:#f00;'>".htmlentities(wfMsg('mappingstatus_conflict'))."</strong>");
+			else if (!$editor->didSave)
+				$wgOut->addHTML("<strong style='color:#f00;'>".htmlentities(wfMsg('mappingstatus_save_error'))."</strong>");
 		}
 		else
 		{
@@ -86,20 +104,22 @@ class MappingStatusEdit extends SpecialPage {
 		$url = $wgTitle->escapeLocalURL()."/".$par."?action=save&mappingstatusmapid=$id";
 		$url = htmlentities($url);
 
-		$wgOut->addScript("<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n");
-		$wgOut->addScript("<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n");
-		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n");
-		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n");
-		$wgOut->addScript("<script type='text/javascript' src='$htmlroot/mappingstatusedit.js'></script>\n");
+		$wgOut->addScript("<script type='$wgJsMimeType' src='http://openlayers.org/api/OpenLayers.js'></script>\n");
+		$wgOut->addScript("<script type='$wgJsMimeType' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n");
+		$wgOut->addScript("<script type='$wgJsMimeType' src='$htmlroot/mappingstatus.js'></script>\n");
+		$wgOut->addScript("<script type='$wgJsMimeType' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n");
+		$wgOut->addScript("<script type='$wgJsMimeType' src='$htmlroot/mappingstatusedit.js'></script>\n");
 
 		$form = "<form action='$url' method='post' id='editform' onsubmit='mappingstatusmap.onsubmit();'>\n";
 		$form .= "<div style='display:block; border-style:solid; border-width:1px; border-color:lightgrey;' id='mappingstatusmap'></div>\n";
 		$form .= "<div id='mappingstatusedit'></div>\n";
 		$form .= "<textarea rows='10' cols='80' name='textbox1' id='mappingstatusdata'>$status</textarea>\n";
+		$form .= "<input type='hidden' name='wpStarttime' value='".wfTimestampNow()."' />\n";
+		$form .= "<input type='hidden' name='wpEdittime' value='".$editor->mArticle->getTimestamp()."' />\n";
 		$form .= $submit;
 		$form .= "</form>\n";
 
-		$form .= "<script type='text/javascript'>\n";
+		$form .= "<script type='$wgJsMimeType'>\n";
 		$form .= "\tvar mappingstatusmap = new MappingStatusMap('$jsroot','mappingstatusmap','mappingstatusdata','mappingstatusedit');\n";
 		$form .= "</script>\n";
 

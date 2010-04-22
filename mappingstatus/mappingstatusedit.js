@@ -173,7 +173,7 @@ MappingStatusMap.prototype.edit = function(statusedit_element)
 			tr.appendChild(this.headers[symbol]);
 		}
 
-		// declare symbol here to know whether this.symbols is empty afterwards
+		// declare symbol here to know afterwards whether this.symbols is empty
 		var symbol;
 
 		// radioboxes, one row per state

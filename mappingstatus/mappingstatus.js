@@ -35,26 +35,65 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 	// DEFINITIONS
 	var epsg4326 = new OpenLayers.Projection("EPSG:4326");
+
 	var layers = {
 		"mapnik":OpenLayers.Layer.OSM.Mapnik,
 		"osmarender":OpenLayers.Layer.OSM.Osmarender,
 		"cyclemap":OpenLayers.Layer.OSM.CycleMap
 	};
 
+	var predefined_symbols = {
+		"Labelled":{
+			"title":wfMsg("symbol_labelled"),
+			"stock":true
+		},
+		"Car":{
+			"title":wfMsg("symbol_car"),
+			"stock":true
+		},
+		"Bike":{
+			"title":wfMsg("symbol_bike"),
+			"stock":true
+		},
+		"Foot":{
+			"title":wfMsg("symbol_foot"),
+			"stock":true
+		},
+		"Transport":{
+			"title":wfMsg("symbol_transport"),
+			"stock":true
+		},
+		"Public":{
+			"title":wfMsg("symbol_public"),
+			"stock":true
+		},
+		"Fuel":{
+			"title":wfMsg("symbol_fuel"),
+			"stock":true
+		},
+		"Restaurant":{
+			"title":wfMsg("symbol_restaurant"),
+			"stock":true
+		},
+		"Tourist":{
+			"title":wfMsg("symbol_tourist"),
+			"stock":true
+		},
+		"Nature":{
+			"title":wfMsg("symbol_nature"),
+			"stock":true
+		},
+		"Housenumbers":{
+			"title":wfMsg("symbol_housenumbers"),
+			"stock":true
+		},
+		"Wheelchair":{
+			"title":wfMsg("symbol_wheelchair"),
+			"stock":true
+		}
+	};
+
 	// METHODS
-	this.set_layer = function(layer)
-	{
-		if (this.layer)	return false;
-
-		if (!layers[layer]) layer="mapnik";
-		this.layer = layer;
-
-		var mapclass = layers[this.layer];
-		var map_layer = new mapclass("Map");
-		this.map.addLayer(map_layer);
-		return true;
-	}
-
 	this.set_map_from_textfield = function()
 	{
 		// default values
@@ -63,23 +102,18 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		zoom=5;
 		width=450;
 		height=450;
-
-		// clean layers
-		while (this.map.layers.length) this.map.removeLayer(this.map.layers[0]);
-		this.layer = null;
-
-		// set up vector layer
-		this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
-
-		this.map.addLayer(this.vectors);
+		this.layer="mapnik";
 
 		// parse textfield content
+		var override_symbols = null;
+		var polygons = [];
+
 		var lines=this.textfield_element.value.split("\n");
 
 		for (var i=0;i<lines.length;i++)
 		{
 			var line = lines[i].replace(/^\s+/, "").replace(/\s+$/, "");
-			var words = line.split(" ");
+			var words = line.split(/\s+/);
 
 			if (words[0]=="latitude")
 			{
@@ -108,127 +142,162 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 			}
 			else if (words[0]=="layer")
 			{
-				if (words[1] in layers)
-				{
-					var success = this.set_layer(words[1]);
-					if (!success)
-					{
-						var error = document.createElement("strong");
-						error.appendChild(document.createTextNode(wfMsg("layer_error")));
-						error.style.color = "#f00";
-						this.map_element.parentNode.insertBefore(error, this.map_element);
-					}
-				}
+				var layer = words[1];
+				if (layers[layer]) this.layer = layer;
 			}
 			else if (words[0]=="symbols")
 			{
-				var all_symbols = this.symbols;
-				this.symbols = {};
+				this.symbols = {}
 
-				for (var j=1; j<words.length; j++)
+				line = line.substr(7).replace(/\s+$/, "").replace(/^\s+/, "");
+
+				while (line)
 				{
-					symbol = words[j];
-					if (!all_symbols[symbol]) continue;
 
-					this.symbols[symbol] = all_symbols[symbol];
+					if (line.substr(0,2)=="[[")
+					{
+						// custom symbol
+						var l = line.search(/\]\]|$/);
+						symbol = line.substr(2,l-2).split("|");
+						line = line.substr(l).replace(/^\s+/, "");
+
+						var file = symbol[0];
+
+						var title;
+						if (symbol[1]) title=symbol[1];
+						else title = file;
+
+						this.symbols[file] = {"title":title, "stock":false};
+					}
+					else
+					{
+						// stock symbol
+						var l = line.search(/\s|$/);
+						symbol = line.substr(0,l);
+						line = line.substr(l).replace(/^\s+/, "");
+
+						if (!predefined_symbols[symbol]) continue;
+
+						this.symbols[symbol] = predefined_symbols[symbol];
+					}
 				}
 			}
 			else if (words[0]=="polygon")
 			{
-				if (!this.layer) this.set_layer();
-
-				// get label and article name
-				var label="";
-				var article="";
-
-				if (line.substr(8,2)=="[[")
-				{
-					line = line.substr(10);
-					var k = line.indexOf("]]")
-					if (k==-1) continue;
-					var content = line.substr(0,k);
-					var j = line.indexOf("|");
-					if (j==-1) article=content;
-					else
-					{
-						article = content.substr(0,j);
-						label = content.substr(j+1);
-					}
-					line = line.substr(k+2);
-				}
-				else if (line.substr(8,1)=="\"")
-				{
-					line = line.substr(9);
-					var k = line.indexOf("\"")
-					if (k==-1) continue;
-					label = line.substr(0,k);
-					line = line.substr(k+1);
-				}
-				else continue;
-
-				// get coordinates of polygon points and add new feature
-				var k = line.indexOf(":");
-				if (k==-1) continue;
-				var points = line.substr(0,k).replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
-				line = line.substr(k+1);
-
-				var geometrypoints = [];
-
-				for (var j=0;j<points.length;j++)
-				{
-					var coordinates = points[j].split(",");
-
-					var lon = parseFloat(coordinates[0]);
-					if (isNaN(lon)) continue;
-
-					var lat = parseFloat(coordinates[1]);
-					if (isNaN(lat)) continue;
-
-					var lonLat = new OpenLayers.LonLat(lon,lat);
-					lonLat.transform(epsg4326, this.map.getProjectionObject());
-					geometrypoints.push( new OpenLayers.Geometry.Point(lonLat.lon,lonLat.lat) );
-				}
-
-				feature = new OpenLayers.Feature.Vector(
-					new OpenLayers.Geometry.Polygon(
-						Array(new OpenLayers.Geometry.LinearRing(geometrypoints))
-					)
-				);
-
-				feature.attributes.label = label;
-				feature.attributes.article = article;
-
-				if (article) feature.attributes.islink="true";
-				else feature.attributes.islink="false";
-
-				feature.attributes.states={};
-
-				this.vectors.addFeatures([feature]);
-
-				// set default values
-				for (var j in this.symbols) feature.attributes.states[j]="";
-
-				// get states
-				var states = line.replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
-
-				for (var j=0;j<states.length;j++)
-				{
-					var tuple = states[j].split("=");
-					feature.attributes.states[tuple[0]]=tuple[1];
-				}
+				// defer parsing of polygon lines
+				polygons.push(line);
 			}
 		}
-
-		if (!this.layer) this.set_layer();
 
 		// set size
 		this.map_element.style.width = width+"px";
 		this.map_element.style.height = height+"px";
 
+		// set symbols
+		if (!this.symbols) this.symbols = predefined_symbols;
+
+		// clean layers
+		while (this.map.layers.length) this.map.removeLayer(this.map.layers[0]);
+
+		// set up map layer
+		var mapclass = layers[this.layer];
+		var map_layer = new mapclass("Map");
+		this.map.addLayer(map_layer);
+
+		// set up vector layer
+		this.vectors = new OpenLayers.Layer.Vector("Vector Layer");
+		this.map.addLayer(this.vectors);
+
 		// set center and zoom
 		var lonLat = new OpenLayers.LonLat(longitude, latitude);
 		lonLat.transform(epsg4326, this.map.getProjectionObject());
 		this.map.setCenter(lonLat, zoom);
+
+		// now parse polygon lines
+		for (var i=0; i<polygons.length; i++)
+		{
+			line = polygons[i];
+
+			// get label and article name
+			var label="";
+			var article="";
+
+			if (line.substr(8,2)=="[[")
+			{
+				line = line.substr(10);
+				var k = line.indexOf("]]")
+				if (k==-1) continue;
+				var content = line.substr(0,k);
+				var j = line.indexOf("|");
+				if (j==-1) article=content;
+				else
+				{
+					article = content.substr(0,j);
+					label = content.substr(j+1);
+				}
+				line = line.substr(k+2);
+			}
+			else if (line.substr(8,1)=="\"")
+			{
+				line = line.substr(9);
+				var k = line.indexOf("\"")
+				if (k==-1) continue;
+				label = line.substr(0,k);
+				line = line.substr(k+1);
+			}
+			else continue;
+
+			// get coordinates of polygon points and add new feature
+			var k = line.indexOf(":");
+			if (k==-1) continue;
+			var points = line.substr(0,k).replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
+			line = line.substr(k+1);
+
+			var geometrypoints = [];
+
+			for (var j=0;j<points.length;j++)
+			{
+				var coordinates = points[j].split(",");
+
+				var lon = parseFloat(coordinates[0]);
+				if (isNaN(lon)) continue;
+
+				var lat = parseFloat(coordinates[1]);
+				if (isNaN(lat)) continue;
+
+				var lonLat = new OpenLayers.LonLat(lon,lat);
+				lonLat.transform(epsg4326, this.map.getProjectionObject());
+				geometrypoints.push( new OpenLayers.Geometry.Point(lonLat.lon,lonLat.lat) );
+			}
+
+			feature = new OpenLayers.Feature.Vector(
+				new OpenLayers.Geometry.Polygon(
+					Array(new OpenLayers.Geometry.LinearRing(geometrypoints))
+				)
+			);
+
+			feature.attributes.label = label;
+			feature.attributes.article = article;
+
+			if (article) feature.attributes.islink="true";
+			else feature.attributes.islink="false";
+
+			feature.attributes.states={};
+
+			this.vectors.addFeatures([feature]);
+
+			// set default values
+			for (var j in this.symbols) feature.attributes.states[j]="";
+
+			// get states
+			var states = line.replace(/^\s+/, "").replace(/\s+$/, "").split(" ");
+
+			for (var j=0;j<states.length;j++)
+			{
+				var tuple = states[j].split("=");
+				feature.attributes.states[tuple[0]]=tuple[1];
+			}
+		}
 	};
 
 	this.set_textfield_from_map = function()
@@ -247,7 +316,18 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		content += "layer "+this.layer+"\n";
 
 		content += "symbols";
-		for (var symbol in this.symbols) content += " "+symbol;
+		for (var symbol in this.symbols)
+		{
+			if (this.symbols[symbol].stock)
+				content += " "+symbol;
+			else
+			{
+				if (this.symbols[symbol].title==symbol)
+					content += " [["+symbol+"]]";
+				else
+					content += " [["+symbol+"|"+this.symbols[symbol].title+"]]";
+			}
+		}
 		content += "\n";
 
 		for (var i=0; i<this.vectors.features.length; i++)
@@ -376,7 +456,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 				th.appendChild(img);
 
 				var td = document.createElement("td");
-				td.appendChild(document.createTextNode(wfMsg(this.symbols[symbol])));
+				td.appendChild(document.createTextNode(this.symbols[symbol].title));
 				tr.appendChild(td);
 			}
 
@@ -449,22 +529,7 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 
 	// CONSTRUCTOR
 
-	// predefined symbols and states, mapping to i18n messages
-	this.symbols = {
-		"Labelled":"symbol_labelled",
-		"Car":"symbol_car",
-		"Bike":"symbol_bike",
-		"Foot":"symbol_foot",
-		"Transport":"symbol_transport",
-		"Public":"symbol_public",
-		"Fuel":"symbol_fuel",
-		"Restaurant":"symbol_restaurant",
-		"Tourist":"symbol_tourist",
-		"Nature":"symbol_nature",
-		"Housenumbers":"symbol_housenumbers",
-		"Wheelchair":"symbol_wheelchair"
-	};
-
+	// list of states, mapping to i18n messages
 	this.states = {
 		"":"state_unknown",
 		"0":"state_0",
@@ -521,9 +586,25 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		for (var state in this.states)
 		{
 			this.preloaded_images[symbol][state] = new Image();
-			this.preloaded_images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
 
-			var title = wfMsg(this.symbols[symbol])+": "+wfMsg(this.states[state]);
+			if (this.symbols[symbol].stock)
+			{
+				// stock symbol
+				this.preloaded_images[symbol][state].src = rootdir+"/images/State_"+symbol+state+".png";
+			}
+			else
+			{
+				// custom symbol
+				var file;
+				var l = symbol.lastIndexOf(".");
+				if (l==-1) file = symbol+state;
+				else file = symbol.substr(0,l)+state+symbol.substr(l);
+
+				var path = wgArticlePath.replace('$1', "Special:FilePath/"+encodeURIComponent(file));
+				this.preloaded_images[symbol][state].src = path;
+			}
+
+			var title = this.symbols[symbol].title+": "+wfMsg(this.states[state]);
 			this.preloaded_images[symbol][state].setAttribute("alt", title);
 			this.preloaded_images[symbol][state].setAttribute("title", title);
 		}
@@ -612,14 +693,39 @@ function MappingStatusMap(rootdir, map_id, textfield_id, statusedit_id)
 		// callbacks
 		var on_select = function(ev) // set scope to the SelectFeature control when registering this callback!
 		{
-			if (ev.feature.attributes.islink=="false")
+			if (ev.feature.attributes.islink=="true")
 			{
-				this.unselect(ev.feature);
-				return;
+				var s = ev.feature.attributes.article.split("#");
+
+				// use escape to spare slash
+				var article = escape(s[0]);
+
+				// use encodeURIComponent to escape everything
+				var hash;
+				if (s[1]) hash=encodeURIComponent(s[1]).replace(/%/g, ".");
+
+				if (article)
+				{
+					var link;
+
+					if (hash)
+					{
+						link = wgArticlePath.replace('$1', article)+"#"+hash;
+					}
+					else
+					{
+						link = wgArticlePath.replace('$1', article);
+					}
+
+					window.location.href = link;
+				}
+				else
+				{
+					window.location.hash = hash;
+				}
 			}
 
-			var link = wgArticlePath.replace('$1', ev.feature.attributes.article);
-			window.location.href = link;
+			this.unselect(ev.feature);
 		}
 
 		var on_highlight = function(ev)

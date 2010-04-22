@@ -54,15 +54,16 @@ $messages['en'] = array(
 	'mappingstatus_symbol_tourist' => 'sights',
 	'mappingstatus_symbol_nature' => 'natural areas as rivers, forest',
 	'mappingstatus_symbol_housenumbers' => 'housenumbers',
-	'mappingstatus_symbol_wheelchar' => 'ways for wheelchairs',
+	'mappingstatus_symbol_wheelchair' => 'ways for wheelchairs',
 	'mappingstatus_legend' => 'Legend',
 	'mappingstatus_delete_polygon' => 'delete polygon',
 	'mappingstatus_edit_polygon' => 'Edit Polygon',
 	'mappingstatus_label' => 'Label: ',
 	'mappingstatus_article' => 'Article: ',
 	'mappingstatus_status' => 'Status',
-	'mappingstatus_layer_error' => 'MappingStatus Error: \'layer\' keyword must show up before any polygons!',
-	'mappingstatus_edit_script_error' => 'You must load mappingstatusedit.js in order to be able to edit a map!'
+	'mappingstatus_edit_script_error' => 'You must load mappingstatusedit.js in order to be able to edit a map!',
+	'mappingstatus_conflict' => 'Saving failed due to an edit conflict!',
+	'mappingstatus_save_error' => 'Saving failed!'
 );
 
 // @author Maximilian Hoegner <pbmaxi@hoegners.de>
@@ -95,15 +96,16 @@ $messages['de'] = array(
 	'mappingstatus_symbol_tourist' => 'Sehenswürdigkeiten',
 	'mappingstatus_symbol_nature' => 'Natürliche Bereiche wie Flüsse und Wälder',
 	'mappingstatus_symbol_housenumbers' => 'Hausnummern',
-	'mappingstatus_symbol_wheelchar' => 'Wege für Rollstuhl',
+	'mappingstatus_symbol_wheelchair' => 'Wege für Rollstühle',
 	'mappingstatus_legend' => 'Legende',
 	'mappingstatus_delete_polygon' => 'Polygon löschen',
 	'mappingstatus_edit_polygon' => 'Polygon bearbeiten',
 	'mappingstatus_label' => 'Titel: ',
 	'mappingstatus_article' => 'Artikel: ',
 	'mappingstatus_status' => 'Status',
-	'mappingstatus_layer_error' => 'Fehler in MappingStatus: Das Schlüsselwort \'layer\' muss vor allen Polygon-Definitionen kommen!',
-	'mappingstatus_edit_script_error' => 'Das Script mappingstatusedit.js muss eingebunden werden, um eine Karte zu bearbeiten!'
+	'mappingstatus_edit_script_error' => 'Das Script mappingstatusedit.js muss eingebunden werden, um eine Karte zu bearbeiten!',
+	'mappingstatus_conflict' => 'Editier-Konflikt! Speichern fehlgeschlagen.',
+	'mappingstatus_save_error' => 'Speichern fehlgeschlagen!'
 );
 
 // @author Merritt
@@ -137,13 +139,14 @@ $messages['fr'] = array(
 	'mappingstatus_symbol_tourist' => 'Monuments',
 	'mappingstatus_symbol_nature' => 'Domaines naturels comme des fôrests et des lacs',
 	'mappingstatus_symbol_housenumbers' => 'Numéros',
-	'mappingstatus_symbol_wheelchar' => 'Chemins pour des chaises roulantes',
+	'mappingstatus_symbol_wheelchair' => 'Chemins pour des chaises roulantes',
 	'mappingstatus_legend' => 'Légende',
 	'mappingstatus_delete_polygon' => 'Eliminer polygone',
 	'mappingstatus_edit_polygon' => 'Adapter polygone',
 	'mappingstatus_label' => 'Titre: ',
 	'mappingstatus_article' => 'Article: ',
 	'mappingstatus_status' => 'Etat',
-	'mappingstatus_layer_error' => 'Cas d\'erreur dans MappingStatus: Le mot-clé \'layer\' doit apparaître devant des définitions des polygones!',
-	'mappingstatus_edit_script_error' => 'Doit intégrer mappingstatusedit.js pour adapter des cartes!'
+	'mappingstatus_edit_script_error' => 'Doit intégrer mappingstatusedit.js pour adapter des cartes!',
+	'mappingstatus_conflict' => 'Sauvegarder tourné court à cause de conflit d\'éditer!',
+	'mappingstatus_save_error' => 'Sauvegarder tourné court!'
 );

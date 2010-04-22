@@ -26,7 +26,7 @@
 class MappingStatusView {
 	static function parse( $input, $argv )
 	{
-		global $wgScriptPath, $wgHooks, $wgParser, $wgUser, $wgLang, $wgOut;
+		global $wgScriptPath, $wgJsMimeType, $wgHooks, $wgParser, $wgUser, $wgLang, $wgOut;
 		global $egOpenlayersScriptLoaded, $egOpenstreetmapScriptLoaded, $egMappingStatusScriptsLoaded;
 
 		wfLoadExtensionMessages('MappingStatus');
@@ -51,20 +51,20 @@ class MappingStatusView {
 
 		if (!$egOpenlayersScriptLoaded)
 		{
-			$output .= "<script type='text/javascript' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
+			$output .= "<script type='$wgJsMimeType' src='http://openlayers.org/api/OpenLayers.js'></script>\n";
 			$egOpenlayersScriptLoaded = true;
 		}
 
 		if (!$egOpenstreetmapScriptLoaded)
 		{
-			$output .= "<script type='text/javascript' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
+			$output .= "<script type='$wgJsMimeType' src='http://openstreetmap.org/openlayers/OpenStreetMap.js'></script>\n";
 			$egOpenstreetmapScriptLoaded = true;
 		}
 
 		if (!$egMappingStatusScriptsLoaded)
 		{
-			$output .= "<script type='text/javascript' src='$htmlroot/mappingstatus.js'></script>\n";
-			$output .= "<script type='text/javascript' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
+			$output .= "<script type='$wgJsMimeType' src='$htmlroot/mappingstatus.js'></script>\n";
+			$output .= "<script type='$wgJsMimeType' src='$htmlroot/i18n.js.php?lang=".$wgLang->getCode()."'></script>\n";
 			$egMappingStatusScriptsLoaded = true;
 		}
 

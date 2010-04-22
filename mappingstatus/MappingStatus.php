@@ -25,7 +25,7 @@
 
 if (!defined('MEDIAWIKI')) die('This file is a MediaWiki extension, it is not a valid entry point');
 
-define('MEDIAWIKI_MAPPINGSTATUS_VERSION', '1');
+define('MEDIAWIKI_MAPPINGSTATUS_VERSION', '2');
 
 $wgExtensionCredits['parserhook'][] = array(
 	'name'           => 'OpenStreetMap Mapping Status',
